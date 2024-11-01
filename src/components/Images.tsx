@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Image } from "../db";
+import { FaTrash, FaPalette, FaDownload } from "react-icons/fa";
 
 export function Images() {
   const images = useLiveQuery(() => db.images.reverse().toArray());
@@ -133,16 +134,18 @@ function ImageSpot({ image }: { image: Image }) {
       <div className="controls mt-2 flex gap-2 items-center">
         <button 
           onClick={() => db.images.delete(image.id)}
-          className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+          className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+          title="Delete"
         >
-          Delete
+          <FaTrash className="w-4 h-4" />
         </button>
         <div className="relative">
           <button
             onClick={() => setShowColorPicker(!showColorPicker)}
-            className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+            title="Background Color"
           >
-            Background Color
+            <FaPalette className="w-4 h-4" />
           </button>
           {showColorPicker && (
             <div className="absolute mt-2 z-10">
@@ -159,18 +162,20 @@ function ImageSpot({ image }: { image: Image }) {
           <a
             href={exportUrl}
             download={`colored-bg-${image.id}.png`}
-            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-1"
+            title="Download with Color"
           >
-            Download with Color
+            <FaDownload className="w-4 h-4" />
           </a>
         )}
         {processedURL && (
           <a 
             href={processedURL} 
             download={`transparent-bg-${image.id}.png`}
-            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-1"
+            title="Download Original"
           >
-            Download Original
+            <FaDownload className="w-4 h-4" />
           </a>
         )}
       </div>
