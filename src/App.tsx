@@ -102,9 +102,9 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white text-gray-800 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-4xl mb-2">ERROR</h2>
+          <h2 className="text-4xl mb-2 font-bold text-red-600">Error</h2>
           <p className="text-xl max-w-[500px] mb-4">{error.message}</p>
           {currentModel === 'Xenova/modnet' && (
             <button
@@ -121,9 +121,9 @@ export default function App() {
 
   if (isLoading || isModelSwitching) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white text-gray-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-4"></div>
           <p className="text-lg">
             {isModelSwitching ? 'Switching models...' : 'Loading background removal model...'}
           </p>
@@ -133,93 +133,61 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2 text-center">
-          Remove Background
-        </h1>
-
-        <div className="flex flex-col items-center mb-4">
-          <div className="flex items-center gap-4">
-            <span>Model:</span>
-            <select
-              value={currentModel}
-              onChange={handleModelChange}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm"
-              disabled={!isWebGPU}
-            >
-              <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
-              {isWebGPU && (
-                <option value="Xenova/modnet">MODNet (WebGPU)</option>
-              )}
-            </select>
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Remove Background
+            </h1>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600">Model:</span>
+              <select
+                value={currentModel}
+                onChange={handleModelChange}
+                className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={!isWebGPU}
+              >
+                <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
+                {isWebGPU && (
+                  <option value="Xenova/modnet">MODNet (WebGPU)</option>
+                )}
+              </select>
+            </div>
           </div>
           {!isWebGPU && (
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               WebGPU is not supported in your browser. Using cross-browser compatible model.
             </p>
           )}
         </div>
+      </nav>
 
-        <h2 className="text-lg font-semibold mb-2 text-center">
-          In-browser background removal, powered by{" "}
-          <a
-            className="underline"
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://github.com/xenova/transformers.js"
-          >
-            🤗 Transformers.js
-          </a>
-        </h2>
-        <div className="flex justify-center mb-8 gap-8">
-          <a
-            className="underline"
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://github.com/huggingface/transformers.js-examples/blob/main/LICENSE"
-          >
-            License (Apache 2.0)
-          </a>
-          <a
-            className="underline"
-            target="_blank"
-            rel="noopener noreferrer"
-            href={currentModel === 'Xenova/modnet' ? 
-              "https://huggingface.co/Xenova/modnet" : 
-              "https://huggingface.co/briaai/RMBG-1.4"
-            }
-          >
-            Model ({currentModel === 'Xenova/modnet' ? 'MODNet' : 'RMBG-1.4'})
-          </a>
-          <a
-            className="underline"
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://github.com/huggingface/transformers.js-examples"
-          >
-            Code (GitHub)
-          </a>
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div
           {...getRootProps()}
-          className={`p-8 mb-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors duration-300 ease-in-out
-            ${isDragAccept ? "border-green-500 bg-green-900/20" : ""}
-            ${isDragReject ? "border-red-500 bg-red-900/20" : ""}
-            ${isDragActive ? "border-blue-500 bg-blue-900/20" : "border-gray-700 hover:border-blue-500 hover:bg-blue-900/10"}
+          className={`p-8 mb-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors duration-300 ease-in-out bg-white
+            ${isDragAccept ? "border-green-500 bg-green-50" : ""}
+            ${isDragReject ? "border-red-500 bg-red-50" : ""}
+            ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"}
           `}
         >
           <input {...getInputProps()} className="hidden" />
-          <p className="text-lg mb-2">
-            {isDragActive
-              ? "Drop the images here..."
-              : "Drag and drop some images here"}
-          </p>
-          <p className="text-sm text-gray-400">or click to select files</p>
+          <div className="flex flex-col items-center gap-2">
+            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-lg text-gray-600">
+              {isDragActive
+                ? "Drop the images here..."
+                : "Drag and drop images here"}
+            </p>
+            <p className="text-sm text-gray-500">or click to select files</p>
+          </div>
         </div>
 
         <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
-      </div>
+      </main>
     </div>
   );
 }

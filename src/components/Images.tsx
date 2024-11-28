@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { ImageFile } from "../App";
+import { EditModal } from "./EditModal";
 
 interface ImagesProps {
   images: ImageFile[];
@@ -9,8 +10,8 @@ interface ImagesProps {
 export function Images({ images, onDelete }: ImagesProps) {
   return (
     <div>
-      <h2>Images: {images.length}</h2>
-      <div className="gap-2 grid grid-cols-4">
+      <h2 className="text-gray-800 text-xl font-semibold mb-4">Images: {images.length}</h2>
+      <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {images.map((image) => {
           if(image.file.type.includes("video")) {
             return <Video video={image} key={image.id} />;
@@ -26,7 +27,7 @@ export function Images({ images, onDelete }: ImagesProps) {
 function Video({ video }: { video: ImageFile }) {
   const url = URL.createObjectURL(video.file);
   return (
-    <div className="">
+    <div className="bg-white rounded-lg shadow-md p-3">
       <video
         className="rounded-lg aspect-square object-cover"
         loop
@@ -44,54 +45,24 @@ interface ImageSpotProps {
 }
 
 function ImageSpot({ image, onDelete }: ImageSpotProps) {
-  const [bgColor, setBgColor] = useState("#ffffff");
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [exportUrl, setExportUrl] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [processedImageUrl, setProcessedImageUrl] = useState("");
 
   const url = URL.createObjectURL(image.file);
   const processedURL = image.processedFile ? URL.createObjectURL(image.processedFile) : "";
   const isProcessing = !image.processedFile;
 
-  const createColorBackground = async () => {
-    if (!image.processedFile) return;
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const img = new Image();
-    
-    img.src = processedURL;
-    await new Promise(resolve => img.onload = resolve);
-    
-    canvas.width = img.width;
-    canvas.height = img.height;
-    
-    // Draw background color
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw the processed image
-    ctx.drawImage(img, 0, 0);
-    
-    // Create URL for download
-    const dataUrl = canvas.toDataURL('image/png');
-    setExportUrl(dataUrl);
+  const handleEditSave = (editedImageUrl: string) => {
+    setProcessedImageUrl(editedImageUrl);
   };
 
-  useEffect(() => {
-    if (image.processedFile) {
-      createColorBackground();
-    }
-  }, [bgColor, image.processedFile]);
-
   return (
-    <div>
-      <div className="relative rounded-lg overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="relative">
         {isProcessing ? (
           <div className="relative">
             <img
-              className="rounded-lg w-full aspect-square object-cover opacity-50 transition-opacity duration-200"
+              className="w-full aspect-square object-cover opacity-50 transition-opacity duration-200"
               src={url}
               alt={`Processing image ${image.id}`}
             />
@@ -103,60 +74,54 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
             </div>
           </div>
         ) : (
-          <img
-            className="rounded-lg w-full aspect-square object-cover transition-opacity duration-200"
-            style={{ backgroundColor: bgColor }}
-            src={processedURL}
-            alt={`Processed image ${image.id}`}
-          />
-        )}
-      </div>
-      <div className="controls mt-2 flex gap-2 items-center">
-        <button 
-          onClick={() => onDelete(image.id)}
-          className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Delete
-        </button>
-        {!isProcessing && (
           <>
-            <div className="relative">
-              <button
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Background Color
-              </button>
-              {showColorPicker && (
-                <div className="absolute mt-2 z-10">
-                  <input
-                    type="color"
-                    value={bgColor}
-                    onChange={(e) => setBgColor(e.target.value)}
-                    className="w-8 h-8 cursor-pointer"
-                  />
-                </div>
-              )}
+            <img
+              className="w-full aspect-square object-cover transition-opacity duration-200"
+              src={processedImageUrl || processedURL}
+              alt={`Processed image ${image.id}`}
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-opacity duration-200">
+              <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-200">
+                <button
+                  onClick={() => onDelete(image.id)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                  title="Delete"
+                >
+                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                  title="Edit"
+                >
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                <a
+                  href={processedImageUrl || processedURL}
+                  download={`processed-${image.id}.png`}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                  title="Download"
+                >
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </a>
+              </div>
             </div>
-            {exportUrl && (
-              <a
-                href={exportUrl}
-                download={`colored-bg-${image.id}.png`}
-                className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Download with Color
-              </a>
-            )}
-            <a 
-              href={processedURL} 
-              download={`transparent-bg-${image.id}.png`}
-              className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Download Original
-            </a>
           </>
         )}
       </div>
+
+      <EditModal
+        image={image}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }
