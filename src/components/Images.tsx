@@ -56,6 +56,8 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
     setProcessedImageUrl(editedImageUrl);
   };
 
+  const transparentBg = `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAGUExURb+/v////5nD/3QAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAUSURBVBjTYwABQSCglEENMxgYGAAynwRB8BEAgQAAAABJRU5ErkJggg==")`;
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative">
@@ -74,11 +76,19 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
             </div>
           </div>
         ) : (
-          <img
-            className="w-full aspect-square object-cover transition-opacity duration-200"
-            src={processedImageUrl || processedURL}
-            alt={`Processed image ${image.id}`}
-          />
+          <div 
+            className="w-full aspect-square"
+            style={{ 
+              background: transparentBg,
+              backgroundRepeat: 'repeat'
+            }}
+          >
+            <img
+              className="w-full h-full object-cover transition-opacity duration-200"
+              src={processedImageUrl || processedURL}
+              alt={`Processed image ${image.id}`}
+            />
+          </div>
         )}
       </div>
 
