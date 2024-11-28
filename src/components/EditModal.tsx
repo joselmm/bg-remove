@@ -10,9 +10,7 @@ interface EditModalProps {
 
 const backgroundOptions = [
   { id: 'color', label: 'Solid Color' },
-  { id: 'image', label: 'Image' },
-  { id: 'gradient', label: 'Gradient' },
-  { id: 'pattern', label: 'Pattern' }
+  { id: 'image', label: 'Image' }
 ];
 
 const effectOptions = [
@@ -202,6 +200,7 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                   type="range"
                   min="0"
                   max="100"
+                  class="bg-gray-100"
                   value={effectValue}
                   onChange={(e) => setEffectValue(Number(e.target.value))}
                   className="w-full"
