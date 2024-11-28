@@ -4,7 +4,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { db } from './db';
 import { Images } from "./components/Images";
-import { processImages, initializeModel } from "../lib/process";
+import { processImages, initializeModel, getModelInfo } from "../lib/process";
 
 interface AppError {
   message: string;
@@ -14,17 +14,20 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
   const [isWebGPU, setIsWebGPU] = useState(false);
+  const [currentModel, setCurrentModel] = useState<'briaai/RMBG-1.4' | 'Xenova/modnet'>('briaai/RMBG-1.4');
+  const [isModelSwitching, setIsModelSwitching] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        // Initialize the appropriate model based on WebGPU support
+        // Initialize with default model (RMBG-1.4)
         const initialized = await initializeModel();
         if (!initialized) {
           throw new Error("Failed to initialize background removal model");
         }
-        // Check if WebGPU is supported for UI indication
-        setIsWebGPU(Boolean((navigator as any).gpu));
+        // Get model info to update UI state
+        const { isWebGPUSupported } = getModelInfo();
+        setIsWebGPU(isWebGPUSupported);
       } catch (err) {
         setError({
           message: err instanceof Error ? err.message : "An unknown error occurred"
@@ -34,11 +37,35 @@ export default function App() {
     })();
   }, []);
 
+  const handleModelChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = event.target.value as typeof currentModel;
+    setIsModelSwitching(true);
+    setError(null);
+    try {
+      const initialized = await initializeModel(newModel);
+      if (!initialized) {
+        throw new Error("Failed to initialize new model");
+      }
+      setCurrentModel(newModel);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("Falling back")) {
+        // If we got the fallback message, update UI to show RMBG-1.4
+        setCurrentModel('briaai/RMBG-1.4');
+      } else {
+        setError({
+          message: err instanceof Error ? err.message : "Failed to switch models"
+        });
+      }
+    } finally {
+      setIsModelSwitching(false);
+    }
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
       const id = await db.images.add({ 
         file,
-        processedFile: undefined // Use undefined instead of null for optional File
+        processedFile: undefined
       });
       console.log(`Added image with id ${id}`);
     }
@@ -80,18 +107,28 @@ export default function App() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-4xl mb-2">ERROR</h2>
-          <p className="text-xl max-w-[500px]">{error.message}</p>
+          <p className="text-xl max-w-[500px] mb-4">{error.message}</p>
+          {currentModel === 'Xenova/modnet' && (
+            <button
+              onClick={() => handleModelChange({ target: { value: 'briaai/RMBG-1.4' }} as any)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Switch to Cross-browser Version
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isModelSwitching) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-4"></div>
-          <p className="text-lg">Loading background removal model...</p>
+          <p className="text-lg">
+            {isModelSwitching ? 'Switching models...' : 'Loading background removal model...'}
+          </p>
         </div>
       </div>
     );
@@ -101,8 +138,30 @@ export default function App() {
     <div className="min-h-screen text-white p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold mb-2 text-center">
-          Remove Background {isWebGPU ? '(WebGPU)' : '(Cross-Browser)'}
+          Remove Background
         </h1>
+
+        <div className="flex flex-col items-center mb-4">
+          <div className="flex items-center gap-4">
+            <span>Model:</span>
+            <select
+              value={currentModel}
+              onChange={handleModelChange}
+              className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm"
+              disabled={!isWebGPU}
+            >
+              <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
+              {isWebGPU && (
+                <option value="Xenova/modnet">MODNet (WebGPU)</option>
+              )}
+            </select>
+          </div>
+          {!isWebGPU && (
+            <p className="text-sm text-gray-400 mt-2">
+              WebGPU is not supported in your browser. Using cross-browser compatible model.
+            </p>
+          )}
+        </div>
 
         <h2 className="text-lg font-semibold mb-2 text-center">
           In-browser background removal, powered by{" "}
@@ -128,12 +187,12 @@ export default function App() {
             className="underline"
             target="_blank"
             rel="noopener noreferrer"
-            href={isWebGPU ? 
+            href={currentModel === 'Xenova/modnet' ? 
               "https://huggingface.co/Xenova/modnet" : 
               "https://huggingface.co/briaai/RMBG-1.4"
             }
           >
-            Model ({isWebGPU ? 'MODNet' : 'RMBG-1.4'})
+            Model ({currentModel === 'Xenova/modnet' ? 'MODNet' : 'RMBG-1.4'})
           </a>
           <a
             className="underline"

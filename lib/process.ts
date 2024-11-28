@@ -16,37 +16,67 @@ interface ModelState {
   model: PreTrainedModel | null;
   processor: Processor | null;
   isWebGPUSupported: boolean;
+  currentModelId: string;
 }
 
 const state: ModelState = {
   model: null,
   processor: null,
-  isWebGPUSupported: false
+  isWebGPUSupported: false,
+  currentModelId: FALLBACK_MODEL_ID
 };
 
-// Initialize the appropriate model based on WebGPU support
-export async function initializeModel(): Promise<boolean> {
+// Initialize WebGPU with proper error handling
+async function initializeWebGPU() {
+  const gpu = (navigator as any).gpu;
+  if (!gpu) {
+    throw new Error("WebGPU is not supported in this browser");
+  }
+
+  try {
+    // Configure environment for WebGPU
+    env.allowLocalModels = false;
+    if (env.backends?.onnx?.wasm) {
+      env.backends.onnx.wasm.proxy = false;
+    }
+
+    // Wait for WebAssembly initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Initialize model with WebGPU
+    state.model = await AutoModel.from_pretrained(WEBGPU_MODEL_ID, {
+      device: "webgpu",
+      config: {
+        model_type: 'modnet',
+        architectures: ['MODNet']
+      }
+    });
+    state.processor = await AutoProcessor.from_pretrained(WEBGPU_MODEL_ID);
+    return true;
+  } catch (error) {
+    console.error("WebGPU initialization failed:", error);
+    throw new Error("Failed to initialize WebGPU model. Falling back to cross-browser version.");
+  }
+}
+
+// Initialize the model based on the selected model ID
+export async function initializeModel(forceModelId?: string): Promise<boolean> {
   try {
     // Check for WebGPU support
     const gpu = (navigator as any).gpu;
+    state.isWebGPUSupported = Boolean(gpu);
     
-    // Configure environment before model initialization
-    env.allowLocalModels = false;
+    // Determine which model to use
+    const selectedModelId = forceModelId || FALLBACK_MODEL_ID;
+    const useWebGPU = selectedModelId === WEBGPU_MODEL_ID && gpu;
     
-    if (gpu) {
-      console.log("WebGPU is supported, initializing WebGPU version...");
-      // WebGPU-specific configuration
-      if (env.backends?.onnx?.wasm) {
-        env.backends.onnx.wasm.proxy = false;
-      }
-      state.model = await AutoModel.from_pretrained(WEBGPU_MODEL_ID, {
-        device: "webgpu"
-      });
-      state.processor = await AutoProcessor.from_pretrained(WEBGPU_MODEL_ID);
-      state.isWebGPUSupported = true;
+    console.log(`Initializing model: ${selectedModelId} ${useWebGPU ? '(WebGPU)' : '(Cross-browser)'}`);
+    
+    if (useWebGPU) {
+      await initializeWebGPU();
     } else {
-      console.log("WebGPU not supported, using cross-browser compatible version...");
-      // Configure ONNX backend for cross-browser compatibility
+      // Configure for cross-browser compatibility
+      env.allowLocalModels = false;
       if (env.backends?.onnx?.wasm) {
         env.backends.onnx.wasm.proxy = true;
       }
@@ -81,11 +111,25 @@ export async function initializeModel(): Promise<boolean> {
       throw new Error("Failed to initialize model or processor");
     }
     
+    state.currentModelId = selectedModelId;
     return true;
   } catch (error) {
     console.error("Error initializing model:", error);
+    // If WebGPU fails, automatically fall back to cross-browser version
+    if (forceModelId === WEBGPU_MODEL_ID) {
+      console.log("Falling back to cross-browser model...");
+      return initializeModel(FALLBACK_MODEL_ID);
+    }
     throw new Error(error instanceof Error ? error.message : "Failed to initialize background removal model");
   }
+}
+
+// Get current model info
+export function getModelInfo() {
+  return {
+    currentModelId: state.currentModelId,
+    isWebGPUSupported: state.isWebGPUSupported
+  };
 }
 
 export async function processImage(image: File): Promise<File> {
