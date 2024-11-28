@@ -74,47 +74,51 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
             </div>
           </div>
         ) : (
-          <>
-            <img
-              className="w-full aspect-square object-cover transition-opacity duration-200"
-              src={processedImageUrl || processedURL}
-              alt={`Processed image ${image.id}`}
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-opacity duration-200">
-              <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <button
-                  onClick={() => onDelete(image.id)}
-                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-                  title="Delete"
-                >
-                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-                  title="Edit"
-                >
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <a
-                  href={processedImageUrl || processedURL}
-                  download={`processed-${image.id}.png`}
-                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-                  title="Download"
-                >
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </>
+          <img
+            className="w-full aspect-square object-cover transition-opacity duration-200"
+            src={processedImageUrl || processedURL}
+            alt={`Processed image ${image.id}`}
+          />
         )}
       </div>
+
+      {!isProcessing && (
+        <div className="p-3 border-t border-gray-100">
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={() => onDelete(image.id)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              title="Delete"
+            >
+              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span className="text-sm text-gray-700">Delete</span>
+            </button>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              title="Edit"
+            >
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              <span className="text-sm text-gray-700">Edit</span>
+            </button>
+            <a
+              href={processedImageUrl || processedURL}
+              download={`processed-${image.id}.png`}
+              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              title="Download"
+            >
+              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span className="text-sm text-gray-700">Download</span>
+            </a>
+          </div>
+        </div>
+      )}
 
       <EditModal
         image={image}
