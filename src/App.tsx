@@ -1,48 +1,34 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import {
-  env,
-  AutoModel,
-  AutoProcessor,
-  RawImage,
-} from "@huggingface/transformers";
-
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { db } from './db';
 import { Images } from "./components/Images";
-import { processImages } from "../lib/process";
-// import "onnxruntime-web/webgpu";
- import "onnxruntime-web";
+import { processImages, initializeModel } from "../lib/process";
+
+interface AppError {
+  message: string;
+}
 
 export default function App() {
-  const [images, setImages] = useState([]);
-
-  const [processedImages, setProcessedImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const modelRef = useRef(null);
-  const processorRef = useRef(null);
+  const [error, setError] = useState<AppError | null>(null);
+  const [isWebGPU, setIsWebGPU] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        if (!navigator.gpu) {
-          console.log("WebGPU is not supported in this browser.");
-          throw new Error("WebGPU is not supported in this browser.");
+        // Initialize the appropriate model based on WebGPU support
+        const initialized = await initializeModel();
+        if (!initialized) {
+          throw new Error("Failed to initialize background removal model");
         }
-        const model_id = "Xenova/modnet";
-        env.backends.onnx.wasm.proxy = false;
-        modelRef.current ??= await AutoModel.from_pretrained(model_id, {
-          device: "webgpu",
-        });
-        processorRef.current ??= await AutoProcessor.from_pretrained(model_id);
-        //  Fetch images from IndexedDB
-        // const images = await db.images.toArray();
-        // setImages(images.map((image) => URL.createObjectURL(image.file)));
+        // Check if WebGPU is supported for UI indication
+        setIsWebGPU(Boolean((navigator as any).gpu));
       } catch (err) {
-        setError(err);
+        setError({
+          message: err instanceof Error ? err.message : "An unknown error occurred"
+        });
       }
       setIsLoading(false);
     })();
@@ -50,7 +36,10 @@ export default function App() {
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
-      const id = await db.images.add({ file, processedFile: "null" });
+      const id = await db.images.add({ 
+        file,
+        processedFile: undefined // Use undefined instead of null for optional File
+      });
       console.log(`Added image with id ${id}`);
     }
     // Trigger image processing
@@ -70,49 +59,20 @@ export default function App() {
     },
   });
 
-
   const downloadAsZip = async () => {
     const zip = new JSZip();
-    const images = (await db.images.toArray()).map((image) => image.processedFile);
-    for(const image of images){
-      zip.file(image.name, image);
+    const images = await db.images.toArray();
+    for(const image of images) {
+      if (image.processedFile) {
+        zip.file(image.processedFile.name, image.processedFile);
+      }
     }
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, `background-blasted.zip`);
   };
 
   const clearAll = () => {
-    setImages([]);
-    setProcessedImages([]);
-    setIsDownloadReady(false);
     db.images.where("id").above(0).delete();
-  };
-
-  const copyToClipboard = async (url) => {
-    try {
-      // Fetch the image from the URL and convert it to a Blob
-      const response = await fetch(url);
-      const blob = await response.blob();
-
-      // Create a clipboard item with the image blob
-      const clipboardItem = new ClipboardItem({ [blob.type]: blob });
-
-      // Write the clipboard item to the clipboard
-      await navigator.clipboard.write([clipboardItem]);
-
-      console.log("Image copied to clipboard");
-    } catch (err) {
-      console.error("Failed to copy image: ", err);
-    }
-  };
-
-  const downloadImage = (url) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "image.png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (error) {
@@ -141,7 +101,7 @@ export default function App() {
     <div className="min-h-screen text-white p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold mb-2 text-center">
-          Remove Background WebGPU
+          Remove Background {isWebGPU ? '(WebGPU)' : '(Cross-Browser)'}
         </h1>
 
         <h2 className="text-lg font-semibold mb-2 text-center">
@@ -149,6 +109,7 @@ export default function App() {
           <a
             className="underline"
             target="_blank"
+            rel="noopener noreferrer"
             href="https://github.com/xenova/transformers.js"
           >
             🤗 Transformers.js
@@ -158,6 +119,7 @@ export default function App() {
           <a
             className="underline"
             target="_blank"
+            rel="noopener noreferrer"
             href="https://github.com/huggingface/transformers.js-examples/blob/main/LICENSE"
           >
             License (Apache 2.0)
@@ -165,14 +127,19 @@ export default function App() {
           <a
             className="underline"
             target="_blank"
-            href="https://huggingface.co/Xenova/modnet"
+            rel="noopener noreferrer"
+            href={isWebGPU ? 
+              "https://huggingface.co/Xenova/modnet" : 
+              "https://huggingface.co/briaai/RMBG-1.4"
+            }
           >
-            Model (MODNet)
+            Model ({isWebGPU ? 'MODNet' : 'RMBG-1.4'})
           </a>
           <a
             className="underline"
             target="_blank"
-            href="https://github.com/huggingface/transformers.js-examples/tree/main/remove-background-webgpu/"
+            rel="noopener noreferrer"
+            href="https://github.com/huggingface/transformers.js-examples"
           >
             Code (GitHub)
           </a>
@@ -211,39 +178,6 @@ export default function App() {
         </div>
 
         <Images/>
-        {/* Old */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {images.map((src, index) => (
-            <div key={index} className="relative group">
-              <img
-                src={processedImages[index] || src}
-                alt={`Image ${index + 1}`}
-                className="rounded-lg object-cover w-full h-48"
-              />
-              {processedImages[index] && (
-                <div className="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                  <button
-                    onClick={() =>
-                      copyToClipboard(processedImages[index] || src)
-                    }
-                    className="mx-2 px-3 py-1 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm"
-                    aria-label={`Copy image ${index + 1} to clipboard`}
-                  >
-                    Copy
-                  </button>
-                  <button
-                    onClick={() => downloadImage(processedImages[index] || src)}
-                    className="mx-2 px-3 py-1 bg-white text-gray-900 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm"
-                    aria-label={`Download image ${index + 1}`}
-                  >
-                    Download
-                  </button>
-                </div>
-              )}
-
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Image } from "../db";
-import { FaTrash, FaPalette, FaDownload, FaImage } from "react-icons/fa";
 
 export function Images() {
   const images = useLiveQuery(() => db.images.reverse().toArray());
@@ -42,11 +41,8 @@ function ImageSpot({ image }: { image: Image }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [bgColor, setBgColor] = useState("#ffffff");
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [bgImage, setBgImage] = useState<string | null>(null);
-  const [useImageBg, setUseImageBg] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [exportUrl, setExportUrl] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const imageProcessed = image.processedFile instanceof File;
   const url = URL.createObjectURL(image.file);
@@ -63,61 +59,27 @@ function ImageSpot({ image }: { image: Image }) {
     setSliderPosition(Math.min(100, Math.max(0, x)));
   };
 
-  const handleBgImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setBgImage(e.target?.result as string);
-        setUseImageBg(true);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const createBackground = async () => {
+  const createColorBackground = async () => {
     if (!imageProcessed || !image.processedFile) return;
     
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const processedImg = new Image();
-    processedImg.src = processedURL;
-    await new Promise(resolve => processedImg.onload = resolve);
+    const img = new Image();
     
-    canvas.width = processedImg.width;
-    canvas.height = processedImg.height;
+    img.src = processedURL;
+    await new Promise(resolve => img.onload = resolve);
     
-    if (useImageBg && bgImage) {
-      // Draw background image
-      const bgImg = new Image();
-      bgImg.src = bgImage;
-      await new Promise(resolve => bgImg.onload = resolve);
-      
-      // Scale and center the background image to cover the canvas
-      const scale = Math.max(
-        canvas.width / bgImg.width,
-        canvas.height / bgImg.height
-      );
-      const x = (canvas.width - bgImg.width * scale) / 2;
-      const y = (canvas.height - bgImg.height * scale) / 2;
-      
-      ctx.drawImage(
-        bgImg,
-        x,
-        y,
-        bgImg.width * scale,
-        bgImg.height * scale
-      );
-    } else {
-      // Draw background color
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    canvas.width = img.width;
+    canvas.height = img.height;
+    
+    // Draw background color
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Draw the processed image
-    ctx.drawImage(processedImg, 0, 0);
+    ctx.drawImage(img, 0, 0);
     
     // Create URL for download
     const dataUrl = canvas.toDataURL('image/png');
@@ -126,9 +88,9 @@ function ImageSpot({ image }: { image: Image }) {
 
   useEffect(() => {
     if (imageProcessed) {
-      createBackground();
+      createColorBackground();
     }
-  }, [bgColor, bgImage, useImageBg, imageProcessed]);
+  }, [bgColor, imageProcessed]);
 
   return (
     <div>
@@ -148,10 +110,7 @@ function ImageSpot({ image }: { image: Image }) {
               className="rounded-lg w-full aspect-square object-cover"
               style={{
                 clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)`,
-                backgroundColor: useImageBg ? undefined : bgColor,
-                backgroundImage: useImageBg && bgImage ? `url(${bgImage})` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundColor: bgColor
               }}
               src={processedURL}
               alt={`Processed image ${image.id}`}
@@ -174,21 +133,16 @@ function ImageSpot({ image }: { image: Image }) {
       <div className="controls mt-2 flex gap-2 items-center">
         <button 
           onClick={() => db.images.delete(image.id)}
-          className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-          title="Delete"
+          className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
         >
-          <FaTrash className="w-4 h-4" />
+          Delete
         </button>
         <div className="relative">
           <button
-            onClick={() => {
-              setShowColorPicker(!showColorPicker);
-              setUseImageBg(false);
-            }}
-            className={`p-2 ${useImageBg ? 'bg-gray-600' : 'bg-blue-600'} text-white rounded-full hover:bg-blue-700 transition-colors`}
-            title="Background Color"
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            <FaPalette className="w-4 h-4" />
+            Background Color
           </button>
           {showColorPicker && (
             <div className="absolute mt-2 z-10">
@@ -201,40 +155,22 @@ function ImageSpot({ image }: { image: Image }) {
             </div>
           )}
         </div>
-        <div className="relative">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleBgImageSelect}
-            accept="image/*"
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className={`p-2 ${useImageBg ? 'bg-blue-600' : 'bg-gray-600'} text-white rounded-full hover:bg-blue-700 transition-colors`}
-            title="Background Image"
-          >
-            <FaImage className="w-4 h-4" />
-          </button>
-        </div>
         {exportUrl && (
           <a
             href={exportUrl}
             download={`colored-bg-${image.id}.png`}
-            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-1"
-            title="Download with Background"
+            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
           >
-            <FaDownload className="w-4 h-4" />
+            Download with Color
           </a>
         )}
         {processedURL && (
           <a 
             href={processedURL} 
             download={`transparent-bg-${image.id}.png`}
-            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-1"
-            title="Download Original"
+            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
           >
-            <FaDownload className="w-4 h-4" />
+            Download Original
           </a>
         )}
       </div>
