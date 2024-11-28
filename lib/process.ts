@@ -29,46 +29,62 @@ export async function initializeModel(): Promise<boolean> {
   try {
     // Check for WebGPU support
     const gpu = (navigator as any).gpu;
+    
+    // Configure environment before model initialization
+    env.allowLocalModels = false;
+    
     if (gpu) {
       console.log("WebGPU is supported, initializing WebGPU version...");
+      // WebGPU-specific configuration
       if (env.backends?.onnx?.wasm) {
         env.backends.onnx.wasm.proxy = false;
       }
       state.model = await AutoModel.from_pretrained(WEBGPU_MODEL_ID, {
-        device: "webgpu",
+        device: "webgpu"
       });
       state.processor = await AutoProcessor.from_pretrained(WEBGPU_MODEL_ID);
       state.isWebGPUSupported = true;
     } else {
       console.log("WebGPU not supported, using cross-browser compatible version...");
-      // Configure for cross-browser compatibility
-      env.allowLocalModels = false;
+      // Configure ONNX backend for cross-browser compatibility
       if (env.backends?.onnx?.wasm) {
         env.backends.onnx.wasm.proxy = true;
       }
       
+      // Initialize model with proper configuration for cross-browser support
       state.model = await AutoModel.from_pretrained(FALLBACK_MODEL_ID, {
-        config: { model_type: 'custom' }
+        progress_callback: (progress) => {
+          console.log(`Loading model: ${Math.round(progress * 100)}%`);
+        }
       });
+      
+      // Initialize processor with specific configuration for RMBG-1.4
       state.processor = await AutoProcessor.from_pretrained(FALLBACK_MODEL_ID, {
+        revision: "main",
         config: {
           do_normalize: true,
-          do_pad: false,
+          do_pad: true,
           do_rescale: true,
           do_resize: true,
           image_mean: [0.5, 0.5, 0.5],
           feature_extractor_type: "ImageFeatureExtractor",
-          image_std: [1, 1, 1],
+          image_std: [0.5, 0.5, 0.5],
           resample: 2,
           rescale_factor: 0.00392156862745098,
-          size: { width: 1024, height: 1024 },
+          size: { width: 1024, height: 1024 }
         }
       });
     }
+    
+    // Verify model and processor initialization
+    if (!state.model || !state.processor) {
+      throw new Error("Failed to initialize model or processor");
+    }
+    
     return true;
   } catch (error) {
     console.error("Error initializing model:", error);
-    return false;
+    throw new Error(error instanceof Error ? error.message : "Failed to initialize background removal model");
   }
 }
 
@@ -79,48 +95,53 @@ export async function processImage(image: File): Promise<File> {
 
   const img = await RawImage.fromURL(URL.createObjectURL(image));
   
-  // Pre-process image
-  const { pixel_values } = await state.processor(img);
-  
-  // Predict alpha matte
-  const { output } = await state.model({ input: pixel_values });
+  try {
+    // Pre-process image
+    const { pixel_values } = await state.processor(img);
+    
+    // Predict alpha matte
+    const { output } = await state.model({ input: pixel_values });
 
-  // Resize mask back to original size
-  const maskData = (
-    await RawImage.fromTensor(output[0].mul(255).to("uint8")).resize(
-      img.width,
-      img.height,
-    )
-  ).data;
+    // Resize mask back to original size
+    const maskData = (
+      await RawImage.fromTensor(output[0].mul(255).to("uint8")).resize(
+        img.width,
+        img.height,
+      )
+    ).data;
 
-  // Create new canvas
-  const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
-  if(!ctx) throw new Error("Could not get 2d context");
-  
-  // Draw original image output to canvas
-  ctx.drawImage(img.toCanvas(), 0, 0);
+    // Create new canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    if(!ctx) throw new Error("Could not get 2d context");
+    
+    // Draw original image output to canvas
+    ctx.drawImage(img.toCanvas(), 0, 0);
 
-  // Update alpha channel
-  const pixelData = ctx.getImageData(0, 0, img.width, img.height);
-  for (let i = 0; i < maskData.length; ++i) {
-    pixelData.data[4 * i + 3] = maskData[i];
+    // Update alpha channel
+    const pixelData = ctx.getImageData(0, 0, img.width, img.height);
+    for (let i = 0; i < maskData.length; ++i) {
+      pixelData.data[4 * i + 3] = maskData[i];
+    }
+    ctx.putImageData(pixelData, 0, 0);
+    
+    // Convert canvas to blob
+    const blob = await new Promise<Blob>((resolve, reject) => 
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error("Failed to create blob")), 
+        "image/png"
+      )
+    );
+    
+    const [fileName] = image.name.split(".");
+    const processedFile = new File([blob], `${fileName}-bg-blasted.png`, { type: "image/png" });
+    return processedFile;
+  } catch (error) {
+    console.error("Error processing image:", error);
+    throw new Error("Failed to process image");
   }
-  ctx.putImageData(pixelData, 0, 0);
-  
-  // Convert canvas to blob
-  const blob = await new Promise<Blob>((resolve, reject) => 
-    canvas.toBlob(
-      (blob) => blob ? resolve(blob) : reject(new Error("Failed to create blob")), 
-      "image/png"
-    )
-  );
-  
-  const [fileName] = image.name.split(".");
-  const processedFile = new File([blob], `${fileName}-bg-blasted.png`, { type: "image/png" });
-  return processedFile;
 }
 
 export async function processImages() {
