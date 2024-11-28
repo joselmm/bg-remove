@@ -16,7 +16,7 @@ const backgroundOptions = [
 const effectOptions = [
   { id: 'none', label: 'None' },
   { id: 'blur', label: 'Blur' },
-  { id: 'brightness', label: 'Brightness' },
+  { id: 'brightness', label: 'Bright' },
   { id: 'contrast', label: 'Contrast' }
 ];
 
@@ -39,6 +39,7 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
   const [selectedEffect, setSelectedEffect] = useState('none');
   const [effectValue, setEffectValue] = useState(50);
   const [exportUrl, setExportUrl] = useState('');
+  const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
 
   const processedURL = image.processedFile ? URL.createObjectURL(image.processedFile) : '';
 
@@ -82,13 +83,36 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
       const data = imageData.data;
       
       switch (selectedEffect) {
+        case 'blur':
+          // Create a temporary canvas for blur effect
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          if (!tempCtx) break;
+          
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          
+          // Draw current state to temp canvas
+          tempCtx.drawImage(canvas, 0, 0);
+          
+          // Clear main canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Apply blur using CSS filter
+          ctx.filter = `blur(${effectValue / 10}px)`;
+          ctx.drawImage(tempCanvas, 0, 0);
+          ctx.filter = 'none';
+          break;
+          
         case 'brightness':
           for (let i = 0; i < data.length; i += 4) {
             data[i] = Math.min(255, data[i] * (effectValue / 50));
             data[i + 1] = Math.min(255, data[i + 1] * (effectValue / 50));
             data[i + 2] = Math.min(255, data[i + 2] * (effectValue / 50));
           }
+          ctx.putImageData(imageData, 0, 0);
           break;
+          
         case 'contrast':
           const factor = (259 * (effectValue + 255)) / (255 * (259 - effectValue));
           for (let i = 0; i < data.length; i += 4) {
@@ -96,10 +120,9 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
             data[i + 1] = factor * (data[i + 1] - 128) + 128;
             data[i + 2] = factor * (data[i + 2] - 128) + 128;
           }
+          ctx.putImageData(imageData, 0, 0);
           break;
       }
-      
-      ctx.putImageData(imageData, 0, 0);
     }
     
     const dataUrl = canvas.toDataURL('image/png');
@@ -158,12 +181,22 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                       />
                     ))}
                   </div>
-                  <input
-                    type="color"
-                    value={bgColor}
-                    onChange={(e) => setBgColor(e.target.value)}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => setShowCustomColorPicker(!showCustomColorPicker)}
+                      className="px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-sm text-gray-700"
+                    >
+                      Custom Color
+                    </button>
+                    {showCustomColorPicker && (
+                      <input
+                        type="color"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                        className="w-8 h-8"
+                      />
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -196,15 +229,21 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
               </div>
 
               {selectedEffect !== 'none' && (
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  class="bg-gray-100"
-                  value={effectValue}
-                  onChange={(e) => setEffectValue(Number(e.target.value))}
-                  className="w-full"
-                />
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={effectValue}
+                    onChange={(e) => setEffectValue(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>0</span>
+                    <span>{effectValue}</span>
+                    <span>100</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
