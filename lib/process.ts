@@ -6,7 +6,6 @@ import {
   PreTrainedModel,
   Processor
 } from "@huggingface/transformers";
-import { db } from '../src/db';
 
 // Initialize different model configurations
 const WEBGPU_MODEL_ID = "Xenova/modnet";
@@ -188,27 +187,20 @@ export async function processImage(image: File): Promise<File> {
   }
 }
 
-export async function processImages() {
+export async function processImages(images: File[]): Promise<File[]> {
   console.log("Processing images...");
+  const processedFiles: File[] = [];
   
-  // Get all images that haven't been processed yet
-  const imagesToProcess = await db.images
-    .filter(image => !image.processedFile)
-    .reverse()
-    .toArray();
-
-  console.log("Images to process:", imagesToProcess.length);
-  
-  for (const image of imagesToProcess) {
-    console.log("Processing image", image.id);
+  for (const image of images) {
     try {
-      const processedFile = await processImage(image.file);
-      await db.images.update(image.id, { processedFile });
-      console.log("Successfully processed image", image.id);
+      const processedFile = await processImage(image);
+      processedFiles.push(processedFile);
+      console.log("Successfully processed image", image.name);
     } catch (error) {
-      console.error("Error processing image", image.id, error);
+      console.error("Error processing image", image.name, error);
     }
   }
   
   console.log("Processing images done");
+  return processedFiles;
 }

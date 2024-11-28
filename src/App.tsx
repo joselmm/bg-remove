@@ -1,13 +1,16 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import { db } from './db';
 import { Images } from "./components/Images";
 import { processImages, initializeModel, getModelInfo } from "../lib/process";
 
 interface AppError {
   message: string;
+}
+
+export interface ImageFile {
+  id: number;
+  file: File;
+  processedFile?: File;
 }
 
 export default function App() {
@@ -16,16 +19,15 @@ export default function App() {
   const [isWebGPU, setIsWebGPU] = useState(false);
   const [currentModel, setCurrentModel] = useState<'briaai/RMBG-1.4' | 'Xenova/modnet'>('briaai/RMBG-1.4');
   const [isModelSwitching, setIsModelSwitching] = useState(false);
+  const [images, setImages] = useState<ImageFile[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        // Initialize with default model (RMBG-1.4)
         const initialized = await initializeModel();
         if (!initialized) {
           throw new Error("Failed to initialize background removal model");
         }
-        // Get model info to update UI state
         const { isWebGPUSupported } = getModelInfo();
         setIsWebGPU(isWebGPUSupported);
       } catch (err) {
@@ -49,7 +51,6 @@ export default function App() {
       setCurrentModel(newModel);
     } catch (err) {
       if (err instanceof Error && err.message.includes("Falling back")) {
-        // If we got the fallback message, update UI to show RMBG-1.4
         setCurrentModel('briaai/RMBG-1.4');
       } else {
         setError({
@@ -62,15 +63,28 @@ export default function App() {
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    for (const file of acceptedFiles) {
-      const id = await db.images.add({ 
-        file,
-        processedFile: undefined
-      });
-      console.log(`Added image with id ${id}`);
+    const newImages = acceptedFiles.map((file, index) => ({
+      id: Date.now() + index,
+      file,
+      processedFile: undefined
+    }));
+    setImages(prev => [...prev, ...newImages]);
+    
+    // Process the new images
+    for (const image of newImages) {
+      try {
+        const result = await processImages([image.file]);
+        if (result && result.length > 0) {
+          setImages(prev => prev.map(img => 
+            img.id === image.id 
+              ? { ...img, processedFile: result[0] }
+              : img
+          ));
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+      }
     }
-    // Trigger image processing
-    await processImages();
   }, []);
 
   const {
@@ -85,22 +99,6 @@ export default function App() {
       "image/*": [".jpeg", ".jpg", ".png", ".mp4"],
     },
   });
-
-  const downloadAsZip = async () => {
-    const zip = new JSZip();
-    const images = await db.images.toArray();
-    for(const image of images) {
-      if (image.processedFile) {
-        zip.file(image.processedFile.name, image.processedFile);
-      }
-    }
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, `background-blasted.zip`);
-  };
-
-  const clearAll = () => {
-    db.images.where("id").above(0).delete();
-  };
 
   if (error) {
     return (
@@ -219,24 +217,8 @@ export default function App() {
           </p>
           <p className="text-sm text-gray-400">or click to select files</p>
         </div>
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="flex gap-4">
-            <button
-              onClick={downloadAsZip}
-              className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
-            >
-              Download as ZIP
-            </button>
-            <button
-              onClick={clearAll}
-              className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-colors duration-200 text-sm"
-            >
-              Clear All
-            </button>
-          </div>
-        </div>
 
-        <Images/>
+        <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
       </div>
     </div>
   );
