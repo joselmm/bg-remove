@@ -10,7 +10,7 @@ interface ImagesProps {
 export function Images({ images, onDelete }: ImagesProps) {
   return (
     <div>
-      <h2 className="text-gray-800 text-xl font-semibold mb-4">Images: {images.length}</h2>
+      <h2 className="hidden text-gray-800 text-xl font-semibold mb-4">Images: {images.length}</h2>
       <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {images.map((image) => {
           if(image.file.type.includes("video")) {

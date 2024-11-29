@@ -13,6 +13,14 @@ export interface ImageFile {
   processedFile?: File;
 }
 
+// Sample images from Unsplash
+const sampleImages = [
+  "https://images.unsplash.com/photo-1601233749202-95d04d5b3c00?q=80&w=2938&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1513013156887-d2bf241c8c82?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1643490745745-e8ca9a3a1c90?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=2333&auto=format&fit=crop&ixlib=rb-4.0.3"
+];
+
 // Check if the user is on mobile Safari
 const isMobileSafari = () => {
   const ua = window.navigator.userAgent;
@@ -101,6 +109,17 @@ export default function App() {
       }
     }
   }, []);
+
+  const handleSampleImageClick = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], 'sample-image.jpg', { type: 'image/jpeg' });
+      onDrop([file]);
+    } catch (error) {
+      console.error('Error loading sample image:', error);
+    }
+  };
 
   const {
     getRootProps,
@@ -227,6 +246,30 @@ export default function App() {
                 <p className="text-sm text-gray-500">or click to select files</p>
               </div>
             </div>
+
+            {images.length === 0 && (
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl text-gray-700 font-semibold mb-4">No image? Try one of these:</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {sampleImages.map((url, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSampleImageClick(url)}
+                      className="relative aspect-square overflow-hidden rounded-lg hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <img
+                        src={url}
+                        alt={`Sample ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500 mt-4">
+                  By uploading an image or URL you agree to our Terms of Service. To learn more about how remove.bg handles your personal data, check our Privacy Policy.
+                </p>
+              </div>
+            )}
 
             <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
           </div>
