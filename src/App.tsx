@@ -221,6 +221,9 @@ export default function App() {
               <p className="text-gray-500">
                 Upload your image and let our AI remove the background instantly. Perfect for professional photos, product images, and more.
               </p>
+              <p className="text-sm text-gray-300 mt-4">
+                Built with love by Addy Osmani using Transformers.js
+              </p>
             </div>
           )}
           
