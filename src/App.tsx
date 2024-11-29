@@ -13,23 +13,41 @@ export interface ImageFile {
   processedFile?: File;
 }
 
+// Check if the user is on mobile Safari
+const isMobileSafari = () => {
+  const ua = window.navigator.userAgent;
+  const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
+  const webkit = !!ua.match(/WebKit/i);
+  const iOSSafari = iOS && webkit && !ua.match(/CriOS/i) && !ua.match(/OPiOS/i) && !ua.match(/FxiOS/i);
+  return iOSSafari && 'ontouchend' in document; // Additional check for touch support
+};
+
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
   const [isWebGPU, setIsWebGPU] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   const [currentModel, setCurrentModel] = useState<'briaai/RMBG-1.4' | 'Xenova/modnet'>('briaai/RMBG-1.4');
   const [isModelSwitching, setIsModelSwitching] = useState(false);
   const [images, setImages] = useState<ImageFile[]>([]);
 
   useEffect(() => {
+    // Check for mobile Safari and redirect if needed
+    if (isMobileSafari()) {
+      window.location.href = 'https://bg-mobile.addy.ie';
+      return;
+    }
+
+    // Continue with normal initialization if not mobile Safari
     (async () => {
       try {
         const initialized = await initializeModel();
         if (!initialized) {
           throw new Error("Failed to initialize background removal model");
         }
-        const { isWebGPUSupported } = getModelInfo();
+        const { isWebGPUSupported, isIOS: isIOSDevice } = getModelInfo();
         setIsWebGPU(isWebGPUSupported);
+        setIsIOS(isIOSDevice);
       } catch (err) {
         setError({
           message: err instanceof Error ? err.message : "An unknown error occurred"
@@ -140,22 +158,28 @@ export default function App() {
             <h1 className="text-2xl font-bold text-gray-800">
               Remove Background
             </h1>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600">Model:</span>
-              <select
-                value={currentModel}
-                onChange={handleModelChange}
-                className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                disabled={!isWebGPU}
-              >
-                <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
-                {isWebGPU && (
-                  <option value="Xenova/modnet">MODNet (WebGPU)</option>
-                )}
-              </select>
-            </div>
+            {!isIOS && (
+              <div className="flex items-center gap-4">
+                <span className="text-gray-600">Model:</span>
+                <select
+                  value={currentModel}
+                  onChange={handleModelChange}
+                  className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={!isWebGPU}
+                >
+                  <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
+                  {isWebGPU && (
+                    <option value="Xenova/modnet">MODNet (WebGPU)</option>
+                  )}
+                </select>
+              </div>
+            )}
           </div>
-          {!isWebGPU && (
+          {isIOS ? (
+            <p className="text-sm text-gray-500 mt-2">
+              Using optimized iOS background removal
+            </p>
+          ) : !isWebGPU && (
             <p className="text-sm text-gray-500 mt-2">
               WebGPU is not supported in your browser. Using cross-browser compatible model.
             </p>

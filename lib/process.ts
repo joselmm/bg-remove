@@ -16,13 +16,34 @@ interface ModelState {
   processor: Processor | null;
   isWebGPUSupported: boolean;
   currentModelId: string;
+  isIOS: boolean;
 }
+
+interface ModelInfo {
+  currentModelId: string;
+  isWebGPUSupported: boolean;
+  isIOS: boolean;
+}
+
+// iOS detection
+const isIOS = () => {
+  return [
+    'iPad Simulator',
+    'iPhone Simulator',
+    'iPod Simulator',
+    'iPad',
+    'iPhone',
+    'iPod'
+  ].includes(navigator.platform)
+  || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+};
 
 const state: ModelState = {
   model: null,
   processor: null,
   isWebGPUSupported: false,
-  currentModelId: FALLBACK_MODEL_ID
+  currentModelId: FALLBACK_MODEL_ID,
+  isIOS: isIOS()
 };
 
 // Initialize WebGPU with proper error handling
@@ -61,11 +82,41 @@ async function initializeWebGPU() {
 // Initialize the model based on the selected model ID
 export async function initializeModel(forceModelId?: string): Promise<boolean> {
   try {
-    // Check for WebGPU support
+    // Always use RMBG-1.4 for iOS
+    if (state.isIOS) {
+      console.log('iOS detected, using RMBG-1.4 model');
+      env.allowLocalModels = false;
+      if (env.backends?.onnx?.wasm) {
+        env.backends.onnx.wasm.proxy = true;
+      }
+
+      state.model = await AutoModel.from_pretrained(FALLBACK_MODEL_ID, {
+        config: { model_type: 'custom' }
+      });
+
+      state.processor = await AutoProcessor.from_pretrained(FALLBACK_MODEL_ID, {
+        config: {
+          do_normalize: true,
+          do_pad: false,
+          do_rescale: true,
+          do_resize: true,
+          image_mean: [0.5, 0.5, 0.5],
+          feature_extractor_type: "ImageFeatureExtractor",
+          image_std: [1, 1, 1],
+          resample: 2,
+          rescale_factor: 0.00392156862745098,
+          size: { width: 1024, height: 1024 },
+        }
+      });
+
+      state.currentModelId = FALLBACK_MODEL_ID;
+      return true;
+    }
+
+    // Non-iOS flow remains the same
     const gpu = (navigator as any).gpu;
     state.isWebGPUSupported = Boolean(gpu);
     
-    // Determine which model to use
     const selectedModelId = forceModelId || FALLBACK_MODEL_ID;
     const useWebGPU = selectedModelId === WEBGPU_MODEL_ID && gpu;
     
@@ -74,20 +125,17 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
     if (useWebGPU) {
       await initializeWebGPU();
     } else {
-      // Configure for cross-browser compatibility
       env.allowLocalModels = false;
       if (env.backends?.onnx?.wasm) {
         env.backends.onnx.wasm.proxy = true;
       }
       
-      // Initialize model with proper configuration for cross-browser support
       state.model = await AutoModel.from_pretrained(FALLBACK_MODEL_ID, {
         progress_callback: (progress) => {
           console.log(`Loading model: ${Math.round(progress * 100)}%`);
         }
       });
       
-      // Initialize processor with specific configuration for RMBG-1.4
       state.processor = await AutoProcessor.from_pretrained(FALLBACK_MODEL_ID, {
         revision: "main",
         config: {
@@ -105,7 +153,6 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
       });
     }
     
-    // Verify model and processor initialization
     if (!state.model || !state.processor) {
       throw new Error("Failed to initialize model or processor");
     }
@@ -114,7 +161,6 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error initializing model:", error);
-    // If WebGPU fails, automatically fall back to cross-browser version
     if (forceModelId === WEBGPU_MODEL_ID) {
       console.log("Falling back to cross-browser model...");
       return initializeModel(FALLBACK_MODEL_ID);
@@ -124,10 +170,11 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
 }
 
 // Get current model info
-export function getModelInfo() {
+export function getModelInfo(): ModelInfo {
   return {
     currentModelId: state.currentModelId,
-    isWebGPUSupported: state.isWebGPUSupported
+    isWebGPUSupported: state.isWebGPUSupported,
+    isIOS: state.isIOS
   };
 }
 
