@@ -19,7 +19,7 @@ const isMobileSafari = () => {
   const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
   const webkit = !!ua.match(/WebKit/i);
   const iOSSafari = iOS && webkit && !ua.match(/CriOS/i) && !ua.match(/OPiOS/i) && !ua.match(/FxiOS/i);
-  return iOSSafari && 'ontouchend' in document; // Additional check for touch support
+  return iOSSafari && 'ontouchend' in document;
 };
 
 export default function App() {
@@ -32,13 +32,11 @@ export default function App() {
   const [images, setImages] = useState<ImageFile[]>([]);
 
   useEffect(() => {
-    // Check for mobile Safari and redirect if needed
     if (isMobileSafari()) {
       window.location.href = 'https://bg-mobile.addy.ie';
       return;
     }
 
-    // Continue with normal initialization if not mobile Safari
     (async () => {
       try {
         const initialized = await initializeModel();
@@ -88,7 +86,6 @@ export default function App() {
     }));
     setImages(prev => [...prev, ...newImages]);
     
-    // Process the new images
     for (const image of newImages) {
       try {
         const result = await processImages([image.file]);
@@ -156,7 +153,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">
-              Remove Background
+              BG
             </h1>
             {!isIOS && (
               <div className="flex items-center gap-4">
@@ -188,29 +185,52 @@ export default function App() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div
-          {...getRootProps()}
-          className={`p-8 mb-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors duration-300 ease-in-out bg-white
-            ${isDragAccept ? "border-green-500 bg-green-50" : ""}
-            ${isDragReject ? "border-red-500 bg-red-50" : ""}
-            ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"}
-          `}
-        >
-          <input {...getInputProps()} className="hidden" />
-          <div className="flex flex-col items-center gap-2">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p className="text-lg text-gray-600">
-              {isDragActive
-                ? "Drop the images here..."
-                : "Drag and drop images here"}
-            </p>
-            <p className="text-sm text-gray-500">or click to select files</p>
+        <div className={`grid ${images.length === 0 ? 'grid-cols-2 gap-8' : 'grid-cols-1'}`}>
+          {images.length === 0 && (
+            <div className="flex flex-col justify-center items-start">
+              <img 
+                src="hero.png"
+                alt="Surprised man"
+                className="mb-6 w-full object-cover h-[400px]"
+              />
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                Remove Image Background
+              </h2>
+              <p className="text-lg text-gray-600 mb-4">
+                100% Automatically and Free
+              </p>
+              <p className="text-gray-500">
+                Upload your image and let our AI remove the background instantly. Perfect for professional photos, product images, and more.
+              </p>
+            </div>
+          )}
+          
+          <div className={images.length === 0 ? '' : 'w-full'}>
+            <div
+              {...getRootProps()}
+              className={`p-8 mb-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors duration-300 ease-in-out bg-white
+                ${isDragAccept ? "border-green-500 bg-green-50" : ""}
+                ${isDragReject ? "border-red-500 bg-red-50" : ""}
+                ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"}
+              `}
+            >
+              <input {...getInputProps()} className="hidden" />
+              <div className="flex flex-col items-center gap-2">
+                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="text-lg text-gray-600">
+                  {isDragActive
+                    ? "Drop the images here..."
+                    : "Drag and drop images here"}
+                </p>
+                <p className="text-sm text-gray-500">or click to select files</p>
+              </div>
+            </div>
+
+            <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
           </div>
         </div>
-
-        <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
       </main>
     </div>
   );
