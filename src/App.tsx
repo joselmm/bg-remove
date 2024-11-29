@@ -269,7 +269,7 @@ export default function App() {
                   ))}
                 </div>
                 <p className="text-sm text-gray-500 mt-4">
-                  By uploading an image or URL you agree to our Terms of Service. To learn more about how remove.bg handles your personal data, check our Privacy Policy.
+                  All images are processed locally on your device and are not uploaded to any server.
                 </p>
               </div>
             )}
