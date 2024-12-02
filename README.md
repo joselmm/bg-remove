@@ -5,8 +5,7 @@ A powerful React + Vite application that removes backgrounds from images directl
 ## Features
 
 - 🎯 One-click background removal for images
-- 🔄 Interactive before/after comparison slider
-- 🎨 Custom background color selection
+- 🎨 Custom background color and image selection
 - 💾 Download options for both transparent and colored backgrounds
 - 🏃‍♂️ Local processing - no server uploads needed
 - 🔒 Privacy-focused - all processing happens in your browser
@@ -35,9 +34,8 @@ Both implementations use Transformers.js to run the machine learning models dire
    - By default, uses RMBG-1.4 for maximum compatibility
    - If WebGPU is available, offers option to switch to MODNet
 3. **Background Removal**: The selected ML model processes your media, creating an alpha mask
-4. **Interactive Results**: Use the slider to compare original and processed versions
-5. **Customization**: Choose a custom background color or keep transparency
-6. **Export**: Download your processed media with either transparent or colored background
+4. **Customization**: Choose a custom background color, image or keep transparency
+5. **Export**: Download your processed media with either transparent or colored background
 
 ## Getting Started
 
