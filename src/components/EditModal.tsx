@@ -37,7 +37,9 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
   const [bgColor, setBgColor] = useState('#ffffff');
   const [customBgImage, setCustomBgImage] = useState<File | null>(null);
   const [selectedEffect, setSelectedEffect] = useState('none');
-  const [effectValue, setEffectValue] = useState(50);
+  const [blurValue, setBlurValue] = useState(50);
+  const [brightnessValue, setBrightnessValue] = useState(50);
+  const [contrastValue, setContrastValue] = useState(50);
   const [exportUrl, setExportUrl] = useState('');
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
 
@@ -47,7 +49,34 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
     if (image.processedFile) {
       applyChanges();
     }
-  }, [bgType, bgColor, customBgImage, selectedEffect, effectValue]);
+  }, [bgType, bgColor, customBgImage, selectedEffect, blurValue, brightnessValue, contrastValue]);
+
+  const getCurrentEffectValue = () => {
+    switch (selectedEffect) {
+      case 'blur':
+        return blurValue;
+      case 'brightness':
+        return brightnessValue;
+      case 'contrast':
+        return contrastValue;
+      default:
+        return 50;
+    }
+  };
+
+  const handleEffectValueChange = (value: number) => {
+    switch (selectedEffect) {
+      case 'blur':
+        setBlurValue(value);
+        break;
+      case 'brightness':
+        setBrightnessValue(value);
+        break;
+      case 'contrast':
+        setContrastValue(value);
+        break;
+    }
+  };
 
   const applyChanges = async () => {
     if (!image.processedFile) return;
@@ -99,22 +128,22 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           
           // Apply blur using CSS filter
-          ctx.filter = `blur(${effectValue / 10}px)`;
+          ctx.filter = `blur(${blurValue / 10}px)`;
           ctx.drawImage(tempCanvas, 0, 0);
           ctx.filter = 'none';
           break;
           
         case 'brightness':
           for (let i = 0; i < data.length; i += 4) {
-            data[i] = Math.min(255, data[i] * (effectValue / 50));
-            data[i + 1] = Math.min(255, data[i + 1] * (effectValue / 50));
-            data[i + 2] = Math.min(255, data[i + 2] * (effectValue / 50));
+            data[i] = Math.min(255, data[i] * (brightnessValue / 50));
+            data[i + 1] = Math.min(255, data[i + 1] * (brightnessValue / 50));
+            data[i + 2] = Math.min(255, data[i + 2] * (brightnessValue / 50));
           }
           ctx.putImageData(imageData, 0, 0);
           break;
           
         case 'contrast':
-          const factor = (259 * (effectValue + 255)) / (255 * (259 - effectValue));
+          const factor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue));
           for (let i = 0; i < data.length; i += 4) {
             data[i] = factor * (data[i] - 128) + 128;
             data[i + 1] = factor * (data[i + 1] - 128) + 128;
@@ -234,13 +263,13 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                     type="range"
                     min="0"
                     max="100"
-                    value={effectValue}
-                    onChange={(e) => setEffectValue(Number(e.target.value))}
+                    value={getCurrentEffectValue()}
+                    onChange={(e) => handleEffectValueChange(Number(e.target.value))}
                     className="w-full"
                   />
                   <div className="flex justify-between text-sm text-gray-500">
                     <span>0</span>
-                    <span>{effectValue}</span>
+                    <span>{getCurrentEffectValue()}</span>
                     <span>100</span>
                   </div>
                 </div>
