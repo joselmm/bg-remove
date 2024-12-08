@@ -222,7 +222,7 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                         type="color"
                         value={bgColor}
                         onChange={(e) => setBgColor(e.target.value)}
-                        className="w-8 h-8"
+                        className="w-8 h-8 border border-gray-400 rounded-md hover:bg-blue-200"
                       />
                     )}
                   </div>
