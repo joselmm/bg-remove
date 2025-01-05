@@ -119,6 +119,23 @@ export default function App() {
     }
   }, [images.length]);
 
+
+  const handlePaste = async (event: React.ClipboardEvent) => {
+    const clipboardItems = event.clipboardData.items;
+    const imageFiles: File[] = [];
+    for (const item of clipboardItems) {
+      if (item.type.startsWith("image")) {
+        const file = item.getAsFile();
+        if (file) {
+          imageFiles.push(file);
+        }
+      }
+    }
+    if (imageFiles.length > 0) {
+      onDrop(imageFiles);
+    }
+  };  
+
   const handleSampleImageClick = async (url: string) => {
     try {
       const response = await fetch(url);
@@ -146,7 +163,7 @@ export default function App() {
   // Remove the full screen error and loading states
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" onPaste={handlePaste}>
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
