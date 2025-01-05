@@ -50,10 +50,16 @@ const state: ModelState = {
 async function initializeWebGPU() {
   const gpu = (navigator as any).gpu;
   if (!gpu) {
-    throw new Error("WebGPU is not supported in this browser");
+    return false;
   }
 
   try {
+    // Test if we can actually create an adapter
+    const adapter = await gpu.requestAdapter();
+    if (!adapter) {
+      return false;
+    }
+
     // Configure environment for WebGPU
     env.allowLocalModels = false;
     if (env.backends?.onnx?.wasm) {
@@ -72,10 +78,11 @@ async function initializeWebGPU() {
       }
     });
     state.processor = await AutoProcessor.from_pretrained(WEBGPU_MODEL_ID);
+    state.isWebGPUSupported = true;
     return true;
   } catch (error) {
     console.error("WebGPU initialization failed:", error);
-    throw new Error("Failed to initialize WebGPU model. Falling back to cross-browser version.");
+    return false;
   }
 }
 
@@ -114,44 +121,47 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
     }
 
     // Non-iOS flow remains the same
-    const gpu = (navigator as any).gpu;
-    state.isWebGPUSupported = Boolean(gpu);
-    
     const selectedModelId = forceModelId || FALLBACK_MODEL_ID;
-    const useWebGPU = selectedModelId === WEBGPU_MODEL_ID && gpu;
     
-    console.log(`Initializing model: ${selectedModelId} ${useWebGPU ? '(WebGPU)' : '(Cross-browser)'}`);
-    
-    if (useWebGPU) {
-      await initializeWebGPU();
-    } else {
-      env.allowLocalModels = false;
-      if (env.backends?.onnx?.wasm) {
-        env.backends.onnx.wasm.proxy = true;
+    // Try WebGPU if requested
+    if (selectedModelId === WEBGPU_MODEL_ID) {
+      const webGPUSuccess = await initializeWebGPU();
+      if (webGPUSuccess) {
+        state.currentModelId = WEBGPU_MODEL_ID;
+        return true;
       }
-      
-      state.model = await AutoModel.from_pretrained(FALLBACK_MODEL_ID, {
-        progress_callback: (progress) => {
-          console.log(`Loading model: ${Math.round(progress * 100)}%`);
-        }
-      });
-      
-      state.processor = await AutoProcessor.from_pretrained(FALLBACK_MODEL_ID, {
-        revision: "main",
-        config: {
-          do_normalize: true,
-          do_pad: true,
-          do_rescale: true,
-          do_resize: true,
-          image_mean: [0.5, 0.5, 0.5],
-          feature_extractor_type: "ImageFeatureExtractor",
-          image_std: [0.5, 0.5, 0.5],
-          resample: 2,
-          rescale_factor: 0.00392156862745098,
-          size: { width: 1024, height: 1024 }
-        }
-      });
+      // If WebGPU fails, fall through to fallback model without error
     }
+    
+    // Use fallback model
+    env.allowLocalModels = false;
+    if (env.backends?.onnx?.wasm) {
+      env.backends.onnx.wasm.proxy = true;
+    }
+    
+    state.model = await AutoModel.from_pretrained(FALLBACK_MODEL_ID, {
+      progress_callback: (progress) => {
+        console.log(`Loading model: ${Math.round(progress * 100)}%`);
+      }
+    });
+    
+    state.processor = await AutoProcessor.from_pretrained(FALLBACK_MODEL_ID, {
+      revision: "main",
+      config: {
+        do_normalize: true,
+        do_pad: true,
+        do_rescale: true,
+        do_resize: true,
+        image_mean: [0.5, 0.5, 0.5],
+        feature_extractor_type: "ImageFeatureExtractor",
+        image_std: [0.5, 0.5, 0.5],
+        resample: 2,
+        rescale_factor: 0.00392156862745098,
+        size: { width: 1024, height: 1024 }
+      }
+    });
+    
+    state.currentModelId = FALLBACK_MODEL_ID;
     
     if (!state.model || !state.processor) {
       throw new Error("Failed to initialize model or processor");
@@ -173,7 +183,7 @@ export async function initializeModel(forceModelId?: string): Promise<boolean> {
 export function getModelInfo(): ModelInfo {
   return {
     currentModelId: state.currentModelId,
-    isWebGPUSupported: state.isWebGPUSupported,
+    isWebGPUSupported: Boolean((navigator as any).gpu),
     isIOS: state.isIOS
   };
 }

@@ -45,9 +45,8 @@ export default function App() {
       return;
     }
 
-    // Just check device capabilities on load, don't load model yet
-    const { isWebGPUSupported, isIOS: isIOSDevice } = getModelInfo();
-    setIsWebGPU(isWebGPUSupported);
+    // Only check iOS on load since that won't change
+    const { isIOS: isIOSDevice } = getModelInfo();
     setIsIOS(isIOSDevice);
     setIsLoading(false);
   }, []);
@@ -92,6 +91,9 @@ export default function App() {
         if (!initialized) {
           throw new Error("Failed to initialize background removal model");
         }
+        // Update WebGPU support status after model initialization
+        const { isWebGPUSupported } = getModelInfo();
+        setIsWebGPU(isWebGPUSupported);
       } catch (err) {
         setError({
           message: err instanceof Error ? err.message : "An unknown error occurred"
@@ -187,13 +189,9 @@ export default function App() {
               </div>
             )}
           </div>
-          {isIOS ? (
+          {isIOS && (
             <p className="text-sm text-gray-500 mt-2">
               Using optimized iOS background removal
-            </p>
-          ) : !isWebGPU && (
-            <p className="text-sm text-gray-500 mt-2">
-              WebGPU is not supported in your browser. Using cross-browser compatible model.
             </p>
           )}
         </div>
