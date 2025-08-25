@@ -15,5 +15,9 @@
   "Drop the images here...": "Suelta las imágenes aquí...",
   "or click to select files": "o haz clic para seleccionar archivos",
   "No image? Try one of these:": "¿Sin imagen? Prueba una de estas:",
-  "All images are processed locally on your device and are not uploaded to any server.": "Todas las imágenes se procesan localmente en tu dispositivo y no se suben a ningún servidor."
+  "All images are processed locally on your device and are not uploaded to any server.": "Todas las imágenes se procesan localmente en tu dispositivo y no se suben a ningún servidor.",
+  "Processing...":"Procesando...",
+  "Delete": "Eliminar",
+  "Edit": "Editar",
+  "Download": "Descargar"
 }
