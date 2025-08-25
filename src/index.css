@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === LIGHT MODE (default) === */
+body {
+  background: linear-gradient(135deg, #5200ae, #4062bb);
+  color: #222;
+}
+
+#root {
+  max-width: 100dvw !important;
+  max-height: 100dvh !important;
+  overflow: auto !important;
+}
+
 .bg-checkered {
   background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
     linear-gradient(-45deg, #808080 25%, transparent 25%),
@@ -11,7 +23,6 @@
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
   background-color: #fff;
 }
-
 
 .mask {
   mask-image: linear-gradient(to right, black 0%, black 100%);
@@ -30,16 +41,6 @@
   mask-size: 0%;
   transition-delay: 0s;
   border: 2px solid red;
-}
-
-body {
-  background: linear-gradient(135deg, #5200ae, #4062bb);
-}
-
-#root{
-  max-width: 100dvw !important;
-  max-height: 100dvh !important;
-  overflow: auto !important;
 }
 
 /* Slider styles */
@@ -75,7 +76,6 @@ input[type="range"]::-moz-range-thumb {
 /* Color picker styles */
 input[type="color"] {
   -webkit-appearance: none;
-  /* border: none; */
   padding: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -96,10 +96,59 @@ input[type="color"]::-webkit-color-swatch {
   object-fit: cover;
 }
 
-.effects-container{
+.effects-container {
   margin: 10px 0 0 0;
 }
 
-.btn-action{
+.btn-action {
   font-size: medium;
+  color: #000;
+  background-color: #eee;
+  border: 1px solid #ccc;
+}
+
+.btn-action:hover {
+  background-color: #ddd;
+}
+
+/* === DARK MODE === */
+body.dark-mode {
+  background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+  color: #e0e0e0;
+}
+
+body.dark-mode .bg-checkered {
+  background-image: linear-gradient(45deg, #555 25%, transparent 25%),
+    linear-gradient(-45deg, #555 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #555 75%),
+    linear-gradient(-45deg, transparent 75%, #555 75%);
+  background-color: #1e1e1e;
+}
+
+body.dark-mode input[type="range"] {
+  background: #555;
+}
+
+body.dark-mode input[type="range"]::-webkit-slider-thumb,
+body.dark-mode input[type="range"]::-moz-range-thumb {
+  background: #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode input[type="color"]::-webkit-color-swatch {
+  border: 1px solid #555;
+}
+
+body.dark-mode .mask.processing {
+  border: 2px solid #ff4444;
+}
+
+body.dark-mode .btn-action {
+  color: #e0e0e0;
+  background-color: #2c2c2c;
+  border: 1px solid #555;
+}
+
+body.dark-mode .btn-action:hover {
+  background-color: #3a3a3a;
 }
