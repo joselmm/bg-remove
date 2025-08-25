@@ -32,5 +32,6 @@
   "Bright": "Brillo",
   "Contrast": "Contraste",
   "Solid Color": "Color sólido",
-  "Image": "Imagen"
+  "Image": "Imagen",
+  "Remove background from image":"Quitar fondo de la imagen"
 }

@@ -49,7 +49,14 @@ export default function App() {
     const { isIOS: isIOSDevice } = getModelInfo();
     setIsIOS(isIOSDevice);
     setIsLoading(false);
+
+    //TOGGLE THEME
   }, []);
+
+  if (window && window["Asc"]?.plugin?.theme?.da) {
+    const theme = window["Asc"]?.plugin?.theme?.da || "light";
+    document.body.classList.toggle("dark-mode", theme === "dark");
+  }
 
   const handleModelChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newModel = event.target.value as typeof currentModel;

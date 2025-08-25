@@ -13,7 +13,6 @@
   }
 
   // --- MAP: array de specs ---
-  // cada spec: { selector: "#id" | ".class" | "selector", original: "English text", target: "textContent"|"optionText"|"value"|"innerHTML"|"alt"|"attr", attrName?: "title" }
   const MAP = [
     { selector: '#title-bg', original: 'BG', target: 'textContent' },
     { selector: '#model-label', original: 'Model:', target: 'textContent' },
@@ -32,12 +31,12 @@
     { selector: '#dropzone-instruction', original: 'or click to select files', target: 'textContent' },
     { selector: '#sample-heading', original: 'No image? Try one of these:', target: 'textContent' },
     { selector: '#sample-note', original: 'All images are processed locally on your device and are not uploaded to any server.', target: 'textContent' },
-    //IMG LIST
+    // LISTA IMÁGENES (clases -> muchas coincidencias)
     { selector: '.processing-text', original: 'Processing...', target: 'textContent' },
-    { selector: '.btn-delete-label', original: 'Delete', target: 'attr', attrName:"title" },
-    { selector: '.btn-edit-label', original: 'Edit', target: 'attr', attrName:"title" },
-    { selector: '.btn-download-label', original: 'Download', target: 'attr', attrName:"title" },
-    //EDIT IMAGE
+    { selector: '.btn-delete-label', original: 'Delete', target: 'attr', attrName: "title" },
+    { selector: '.btn-edit-label', original: 'Edit', target: 'attr', attrName: "title" },
+    { selector: '.btn-download-label', original: 'Download', target: 'attr', attrName: "title" },
+    // EDIT IMAGE
     { selector: '#edit-image-title', original: 'Edit Image', target: 'textContent' },
     { selector: '#bg-heading', original: 'Background', target: 'textContent' },
     { selector: '#custom-color-btn', original: 'Custom Color', target: 'textContent' },
@@ -53,7 +52,7 @@
     { selector: '#bg-option-image', original: 'Image', target: 'textContent' }
   ];
 
-  // --- util: escape selector (para construir combinaciones seguras si hace falta) ---
+  // --- util: escape selector (para construcción segura si hace falta) ---
   function escapeSelector(s) {
     if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(s);
     return s.replace(/([ #;?%&,.+*~\':"!\^$\[\]\(\)=>|\/@])/g, '\\$1');
@@ -75,7 +74,7 @@
           break;
 
         case 'value':
-          if (el.value !== undefined && el.value !== translated) el.value = translated;
+          if ('value' in el && el.value !== translated) el.value = translated;
           break;
 
         case 'innerHTML':
@@ -109,18 +108,15 @@
   function elementsForSpecInNode(spec, rootNode) {
     const sel = spec.selector;
     const results = [];
-
     if (!rootNode) return results;
 
     try {
-      // Si selector es id (empieza con #), buscar con querySelector (single)
+      // Si selector es id (empieza con #), buscar single
       if (typeof sel === 'string' && sel.startsWith('#')) {
-        // incluir rootNode si coincide
         if (rootNode.nodeType === 1 && rootNode.matches && rootNode.matches(sel)) {
           results.push(rootNode);
           return results;
         }
-        // buscar dentro de rootNode
         const found = rootNode.querySelector ? rootNode.querySelector(sel) : null;
         if (found) results.push(found);
         return results;
@@ -137,16 +133,15 @@
         }
       }
     } catch (e) {
-      // si selector inválido, ignorar silenciosamente
+      // selector inválido -> ignorar
     }
     return results;
   }
 
-  // --- aplicar todas las traducciones (pasada completa sobre document) ---
+  // --- aplicar todas las traducciones sobre el document ---
   function applyTranslations() {
     try {
       for (const spec of MAP) {
-        // para selectors por id usamos document.querySelector (single), para otros querySelectorAll
         if (spec.selector && typeof spec.selector === 'string' && spec.selector.startsWith('#')) {
           const el = document.querySelector(spec.selector);
           if (el) applySpecToElement(el, spec);
@@ -168,16 +163,13 @@
         if (heroImg.alt !== altTranslated) heroImg.alt = altTranslated;
       }
     } catch (e) {
-      // si algo falla, no romper la UI
       console.warn('applyTranslations error', e);
     }
   }
 
-  // --- aplicar traducciones a un subtree concreto (más eficiente) ---
+  // --- aplicar traducciones a un subtree concreto ---
   function applyTranslationsToTree(rootNode) {
     if (!rootNode) return;
-
-    // Para cada spec, buscar elementos dentro del subtree y aplicar
     for (const spec of MAP) {
       const els = elementsForSpecInNode(spec, rootNode);
       if (els && els.length) {
@@ -195,49 +187,39 @@
     const opts = { childList: true, subtree: true, attributes: true, attributeOldValue: false };
 
     observer = new MutationObserver((mutations) => {
-      // desconectar para evitar loop por nuestros cambios
       if (observer) observer.disconnect();
 
       try {
         for (const mutation of mutations) {
           if (mutation.type === 'childList') {
-            // nodos añadidos: aplicar en sus subtrees
             mutation.addedNodes.forEach(node => {
               if (node.nodeType === 1) applyTranslationsToTree(node);
             });
-            // nodos removidos -> no hace falta
           } else if (mutation.type === 'attributes') {
             const tgt = mutation.target;
             if (!tgt || tgt.nodeType !== 1) continue;
 
-            // Chequear si el elemento modificado coincide con alguna spec
             for (const spec of MAP) {
               try {
                 if (spec.selector && typeof spec.selector === 'string' && spec.selector.startsWith('#')) {
-                  // si el id coincide
                   const id = spec.selector.slice(1);
                   if (tgt.id === id) {
                     applySpecToElement(tgt, spec);
-                    break; // ya aplicado para esta mutation
+                    break;
                   }
                 } else {
-                  // usar matches para clasess y selectores complejos
                   if (tgt.matches && tgt.matches(spec.selector)) {
                     applySpecToElement(tgt, spec);
                     break;
                   }
                 }
-              } catch (e) {
-                // ignore selector errors
-              }
+              } catch (e) {}
             }
           }
         }
       } catch (e) {
-        // fallback: aplicar todo si algo va mal
         try { applyTranslations(); } catch (ee) { /* ignore */ }
       } finally {
-        // reconectar
         if (observer) observer.observe(root, opts);
       }
     });
@@ -246,21 +228,69 @@
     return true;
   }
 
+  // --- apply theme (robusto) ---
+  function applyTheme() {
+    try {
+      // preferimos .theme.type (más estándar), fallback a .theme.da
+      const themeVal = (window?.Asc?.plugin?.theme?.type ?? window?.Asc?.plugin?.theme?.da ?? '').toString().toLowerCase();
+      const isDark = themeVal === 'dark';
+      document.body.classList.toggle('dark-mode', isDark);
+    } catch (e) {
+      // no hay Asc o theme -> no romper
+    }
+  }
+
   // --- inicialización: registrar onTranslate y montar observer ---
   function initTranslationSystem() {
     // pasada inicial
     try { applyTranslations(); } catch (e) { /* ignore */ }
 
-    // registrar onTranslate en ONLYOFFICE
+    // registrar onTranslate en ONLYOFFICE (seguro)
     if (window?.Asc?.plugin) {
-      try { window.Asc.plugin.onTranslate = applyTranslations; } catch (e) { /* ignore */ }
+      try {
+        // onTranslate debe aplicar traducciones y tema (al cambiar idioma puede requerirse re-evaluar textos)
+        window.Asc.plugin.onTranslate = function () {
+          try { applyTranslations(); } catch (e) {}
+          try { applyTheme(); } catch (e) {}
+        };
+      } catch (e) { /* ignore */ }
+
+      // preservar cualquier init anterior y envolverlo
+      try {
+        const prevInit = window.Asc.plugin.init;
+        window.Asc.plugin.init = function () {
+          // aplicar traducciones y tema inmediatamente en init
+          try { applyTranslations(); } catch (e) {}
+          try { applyTheme(); } catch (e) {}
+
+          // llamar init anterior (si existía)
+          if (typeof prevInit === 'function') {
+            try { prevInit(); } catch (err) { /* ignore */ }
+          }
+        };
+      } catch (e) { /* ignore */ }
+
+      // si el host expone onThemeChanged, registramos una escucha ligera
+      try {
+        window.Asc.plugin.onThemeChanged = function (themeObj) {
+          try {
+            // themeObj puede venir como { type: 'dark' } o similar
+            applyTheme();
+          } catch (e) { /* ignore */ }
+        };
+      } catch (e) { /* ignore */ }
     }
 
     // montar observer en #root (o esperar a load si no existe)
     if (!setupObserver()) {
       window.addEventListener('load', () => {
         try { setupObserver(); } catch (e) { /* ignore */ }
+        // también aplicar tema en load si ascendió
+        try { applyTheme(); } catch (e) {}
       }, { once: true });
+    } else {
+      // si observer montado ahora, aplicar tema inmediatamente
+      try { applyTheme(); } catch (e) {}
     }
   }
 
@@ -280,7 +310,8 @@
   window.__onlyofficeTranslations = {
     MAP,
     applyTranslations,
-    applyTranslationsToTree
+    applyTranslationsToTree,
+    applyTheme
   };
 
 })();
