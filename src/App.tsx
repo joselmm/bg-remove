@@ -81,7 +81,7 @@ export default function App() {
       processedFile: undefined
     }));
     setImages(prev => [...prev, ...newImages]);
-    
+
     // Initialize model if this is the first image
     if (images.length === 0) {
       setIsLoading(true);
@@ -104,7 +104,7 @@ export default function App() {
       }
       setIsLoading(false);
     }
-    
+
     for (const image of newImages) {
       try {
         const result = await processImages([image.file]);
@@ -136,7 +136,7 @@ export default function App() {
     if (imageFiles.length > 0) {
       onDrop(imageFiles);
     }
-  };  
+  };
 
   const handleSampleImageClick = async (url: string) => {
     try {
@@ -169,28 +169,32 @@ export default function App() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 id="title-bg" className="text-2xl font-bold text-gray-800">
               BG
             </h1>
             {!isIOS && (
               <div className="flex items-center gap-4">
-                <span className="text-gray-600">Model:</span>
+                <span id="model-label" className="text-gray-600">Model:</span>
                 <select
                   value={currentModel}
                   onChange={handleModelChange}
                   className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={!isWebGPU}
                 >
-                  <option value="briaai/RMBG-1.4">RMBG-1.4 (Cross-browser)</option>
+                  <option id="option-rmbg" value="briaai/RMBG-1.4">
+                    RMBG-1.4 (Cross-browser)
+                  </option>
                   {isWebGPU && (
-                    <option value="Xenova/modnet">MODNet (WebGPU)</option>
+                    <option id="option-modnet" value="Xenova/modnet">
+                      MODNet (WebGPU)
+                    </option>
                   )}
                 </select>
               </div>
             )}
           </div>
           {isIOS && (
-            <p className="text-sm text-gray-500 mt-2">
+            <p id="ios-info" className="text-sm text-gray-500 mt-2">
               Using optimized iOS background removal
             </p>
           )}
@@ -201,26 +205,26 @@ export default function App() {
         <div className={`grid ${images.length === 0 ? 'grid-cols-2 gap-8' : 'grid-cols-1'}`}>
           {images.length === 0 && (
             <div className="flex flex-col justify-center items-start">
-              <img 
+              <img
                 src="hero.png"
                 alt="Surprised man"
                 className="mb-6 w-full object-cover h-[400px]"
               />
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              <h2 id="hero-title" className="text-3xl font-bold text-gray-800 mb-4">
                 Remove Image Background
               </h2>
-              <p className="text-lg text-gray-600 mb-4">
+              <p id="hero-subtitle" className="text-lg text-gray-600 mb-4">
                 100% Automatically and Free
               </p>
-              <p className="text-gray-500">
+              <p id="hero-description" className="text-gray-500 mb-4">
                 Upload your image and let our AI remove the background instantly. Perfect for professional photos, product images, and more.
               </p>
-              <p className="text-sm text-gray-300 mt-4">
+              <p id="hero-credit" className="text-sm text-gray-300 mt-4">
                 Built with love by Addy Osmani using Transformers.js
               </p>
             </div>
           )}
-          
+
           <div className={images.length === 0 ? '' : 'w-full'}>
             <div
               {...getRootProps()}
@@ -236,7 +240,10 @@ export default function App() {
                 {isLoading || isModelSwitching ? (
                   <>
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-2"></div>
-                    <p className="text-lg text-gray-600">
+                    <p
+                      id={isModelSwitching ? "switching-models-message" : "loading-message"}
+                      className="text-lg text-gray-600"
+                    >
                       {isModelSwitching ? 'Switching models...' : 'Loading background removal model...'}
                     </p>
                   </>
@@ -245,12 +252,12 @@ export default function App() {
                     <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <p className="text-lg text-red-600 font-medium mb-2">{error.message}</p>
+                    <p id="error-message" className="text-lg text-red-600 font-medium mb-2">{error.message}</p>
                     {currentModel === 'Xenova/modnet' && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleModelChange({ target: { value: 'briaai/RMBG-1.4' }} as any);
+                          handleModelChange({ target: { value: 'briaai/RMBG-1.4' } } as any);
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
@@ -263,12 +270,13 @@ export default function App() {
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="text-lg text-gray-600">
-                      {isDragActive
-                        ? "Drop the images here..."
-                        : "Drag and drop images here"}
+                    <p
+                      id={isDragActive ? "dropzone-prompt-active" : "dropzone-prompt-default"}
+                      className="text-lg text-gray-600"
+                    >
+                      {isDragActive ? "Drop the images here..." : "Drag and drop images here"}
                     </p>
-                    <p className="text-sm text-gray-500">or click to select files</p>
+                    <p id="dropzone-instruction" className="text-sm text-gray-500">or click to select files</p>
                   </>
                 )}
               </div>
@@ -276,7 +284,9 @@ export default function App() {
 
             {images.length === 0 && (
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-xl text-gray-700 font-semibold mb-4">No image? Try one of these:</h3>
+                <h3 id="sample-heading" className="text-xl text-gray-700 font-semibold mb-4">
+                  No image? Try one of these:
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {sampleImages.map((url, index) => (
                     <button
@@ -292,13 +302,16 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-4">
+                <p id="sample-note" className="text-sm text-gray-500 mt-4">
                   All images are processed locally on your device and are not uploaded to any server.
                 </p>
               </div>
             )}
 
-            <Images images={images} onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))} />
+            <Images
+              images={images}
+              onDelete={(id) => setImages(prev => prev.filter(img => img.id !== id))}
+            />
           </div>
         </div>
       </main>

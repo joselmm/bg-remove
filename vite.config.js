@@ -20,5 +20,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['@huggingface/transformers'] // Prevent optimization of transformers.js
-  }
+  },
+  base: './', // <--- esto hace que los assets se resuelvan como ./ en vez de /
+
 });

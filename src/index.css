@@ -12,6 +12,7 @@
   background-color: #fff;
 }
 
+
 .mask {
   mask-image: linear-gradient(to right, black 0%, black 100%);
   mask-size: 100%;
@@ -33,6 +34,12 @@
 
 body {
   background: linear-gradient(135deg, #5200ae, #4062bb);
+}
+
+#root{
+  max-width: 100dvw !important;
+  max-height: 100dvh !important;
+  overflow: auto !important;
 }
 
 /* Slider styles */
