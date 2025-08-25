@@ -34,9 +34,9 @@
     { selector: '#sample-note', original: 'All images are processed locally on your device and are not uploaded to any server.', target: 'textContent' },
     //IMG LIST
     { selector: '.processing-text', original: 'Processing...', target: 'textContent' },
-    { selector: '.btn-delete-label', original: 'Delete', target: 'textContent' },
-    { selector: '.btn-edit-label', original: 'Edit', target: 'textContent' },
-    { selector: '.btn-download-label', original: 'Download', target: 'textContent' },
+    { selector: '.btn-delete-label', original: 'Delete', target: 'attr', attrName:"title" },
+    { selector: '.btn-edit-label', original: 'Edit', target: 'attr', attrName:"title" },
+    { selector: '.btn-download-label', original: 'Download', target: 'attr', attrName:"title" },
     //EDIT IMAGE
     { selector: '#edit-image-title', original: 'Edit Image', target: 'textContent' },
     { selector: '#bg-heading', original: 'Background', target: 'textContent' },

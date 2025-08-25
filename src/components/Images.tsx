@@ -201,35 +201,34 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
           <div className="flex justify-center gap-2">
             <button
               onClick={() => onDelete(image.id)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              className="btn-action btn-delete-label flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
             >
               <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              <span className="text-sm text-gray-700 btn-delete-label">Delete</span>
             </button>
 
             <button
+
               onClick={() => setIsEditModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              className="btn-action btn-edit-label flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
 
             >
               <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
-              <span className="text-sm text-gray-700 btn-edit-label">Edit</span>
             </button>
 
             <a
               href={processedImageUrl || processedURL}
               download={`processed-${image.id}.png`}
-              className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              className="btn-action btn-download-label flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
 
             >
               <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              <span className="text-sm text-gray-700 btn-download-label">Download</span>
+
             </a>
 
             {(
@@ -239,13 +238,15 @@ function ImageSpot({ image, onDelete }: ImageSpotProps) {
               window["Asc"]["plugin"].hasOwnProperty("executeCommand")
             ) && (
                 <button
-                  onClick={()=>insertImageIntoDocument(image)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                  onClick={() => insertImageIntoDocument(image)}
+                  className="btn-action btn-insert-label flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" style={{height: '1.3rem'}} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6 text-purple-600">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                   </svg>
-                  <span className="text-sm text-gray-700 btn-insert-label">Insert</span>
+
+
+
                 </button>
               )}
 
