@@ -37,7 +37,20 @@
     { selector: '.btn-delete-label', original: 'Delete', target: 'textContent' },
     { selector: '.btn-edit-label', original: 'Edit', target: 'textContent' },
     { selector: '.btn-download-label', original: 'Download', target: 'textContent' },
-
+    //EDIT IMAGE
+    { selector: '#edit-image-title', original: 'Edit Image', target: 'textContent' },
+    { selector: '#bg-heading', original: 'Background', target: 'textContent' },
+    { selector: '#custom-color-btn', original: 'Custom Color', target: 'textContent' },
+    { selector: '#effects-heading', original: 'Effects', target: 'textContent' },
+    { selector: '#preview-heading', original: 'Preview', target: 'textContent' },
+    { selector: '#btn-cancel-edit', original: 'Cancel', target: 'textContent' },
+    { selector: '#btn-save-edit', original: 'Save Changes', target: 'textContent' },
+    { selector: '#option-effect-none', original: 'None', target: 'textContent' },
+    { selector: '#option-effect-blur', original: 'Blur', target: 'textContent' },
+    { selector: '#option-effect-brightness', original: 'Bright', target: 'textContent' },
+    { selector: '#option-effect-contrast', original: 'Contrast', target: 'textContent' },
+    { selector: '#bg-option-color', original: 'Solid Color', target: 'textContent' },
+    { selector: '#bg-option-image', original: 'Image', target: 'textContent' }
   ];
 
   // --- util: escape selector (para construir combinaciones seguras si hace falta) ---

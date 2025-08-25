@@ -16,8 +16,21 @@
   "or click to select files": "o haz clic para seleccionar archivos",
   "No image? Try one of these:": "¿Sin imagen? Prueba una de estas:",
   "All images are processed locally on your device and are not uploaded to any server.": "Todas las imágenes se procesan localmente en tu dispositivo y no se suben a ningún servidor.",
-  "Processing...":"Procesando...",
+  "Processing...": "Procesando...",
   "Delete": "Eliminar",
   "Edit": "Editar",
-  "Download": "Descargar"
+  "Download": "Descargar",
+  "Edit Image": "Editar imagen",
+  "Background": "Fondo",
+  "Custom Color": "Color personalizado",
+  "Effects": "Efectos",
+  "Preview": "Vista previa",
+  "Cancel": "Cancelar",
+  "Save Changes": "Guardar cambios",
+  "None": "Ninguno",
+  "Blur": "Desenfoque",
+  "Bright": "Brillo",
+  "Contrast": "Contraste",
+  "Solid Color": "Color sólido",
+  "Image": "Imagen"
 }

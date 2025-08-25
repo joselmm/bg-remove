@@ -7,7 +7,7 @@
   "variations": [
     {
       "url": "index.html",
-      "type": "panel",
+      "type": "window",
       "description": "Convert the text ChatGPT gives you into a ready-to-share Word document.",
       "descriptionLocale": {
         "ru": "Преобразуйте текст, который дает вам ChatGPT, в готовый документ Word.",

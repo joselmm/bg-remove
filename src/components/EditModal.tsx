@@ -194,7 +194,7 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                   >
-                    {option.label}
+                    <span id={"bg-option-"+option.id}>{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -241,7 +241,20 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
               )}
             </div>
 
-            <div>
+            
+          </div>
+
+          <div>
+            <h3 id="preview-heading" className="font-medium text-gray-700 mb-2">Preview</h3>
+            <div className="border rounded-lg overflow-hidden">
+              <img
+                src={exportUrl || processedURL}
+                alt="Preview"
+                className="w-full object-contain"
+              />
+            </div>
+          </div>
+          <div className='effects-container'>
               <h3 id="effects-heading" className="font-medium text-gray-700 mb-2">Effects</h3>
               <div className="flex gap-2 mb-4">
                 {effectOptions.map(option => (
@@ -254,7 +267,7 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                   >
-                    {option.label}
+                    <span id={"option-effect-"+option.id}>{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -277,18 +290,6 @@ export function EditModal({ image, isOpen, onClose, onSave }: EditModalProps) {
                 </div>
               )}
             </div>
-          </div>
-
-          <div>
-            <h3 id="preview-heading" className="font-medium text-gray-700 mb-2">Preview</h3>
-            <div className="border rounded-lg overflow-hidden">
-              <img
-                src={exportUrl || processedURL}
-                alt="Preview"
-                className="w-full object-contain"
-              />
-            </div>
-          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
