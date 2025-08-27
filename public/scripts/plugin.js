@@ -36,6 +36,7 @@
     { selector: '.btn-delete-label', original: 'Delete', target: 'attr', attrName: "title" },
     { selector: '.btn-edit-label', original: 'Edit', target: 'attr', attrName: "title" },
     { selector: '.btn-download-label', original: 'Download', target: 'attr', attrName: "title" },
+    { selector: '.btn-insert-label', original: 'Insert', target: 'attr', attrName: "title" },
     // EDIT IMAGE
     { selector: '#edit-image-title', original: 'Edit Image', target: 'textContent' },
     { selector: '#bg-heading', original: 'Background', target: 'textContent' },
