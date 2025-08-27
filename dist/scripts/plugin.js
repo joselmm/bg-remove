@@ -213,7 +213,7 @@
                     break;
                   }
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
           }
         }
@@ -250,8 +250,8 @@
       try {
         // onTranslate debe aplicar traducciones y tema (al cambiar idioma puede requerirse re-evaluar textos)
         window.Asc.plugin.onTranslate = function () {
-          try { applyTranslations(); } catch (e) {}
-          try { applyTheme(); } catch (e) {}
+          try { applyTranslations(); } catch (e) { }
+          try { applyTheme(); } catch (e) { }
         };
       } catch (e) { /* ignore */ }
 
@@ -259,9 +259,12 @@
       try {
         const prevInit = window.Asc.plugin.init;
         window.Asc.plugin.init = function () {
+
+
           // aplicar traducciones y tema inmediatamente en init
-          try { applyTranslations(); } catch (e) {}
-          try { applyTheme(); } catch (e) {}
+          try { applyTranslations(); } catch (e) { }
+          try { applyTheme(); } catch (e) { }
+          try { addContextMenuItem() } catch (e) { }
 
           // llamar init anterior (si existía)
           if (typeof prevInit === 'function') {
@@ -286,11 +289,11 @@
       window.addEventListener('load', () => {
         try { setupObserver(); } catch (e) { /* ignore */ }
         // también aplicar tema en load si ascendió
-        try { applyTheme(); } catch (e) {}
+        try { applyTheme(); } catch (e) { }
       }, { once: true });
     } else {
       // si observer montado ahora, aplicar tema inmediatamente
-      try { applyTheme(); } catch (e) {}
+      try { applyTheme(); } catch (e) { }
     }
   }
 
@@ -314,4 +317,55 @@
     applyTheme
   };
 
+  function addContextMenuItem() {
+    // dentro de window.Asc.plugin.init o en el script del plugin
+    window.Asc.plugin.event_onContextMenuClick = (id) => {
+      if (id === "remove-background-btn") {
+        window.Asc.plugin.executeMethod("GetImageDataFromSelection", [], function (result) {
+          var file = base64ToFile(result.src);
+          window["passImageFile"](file);
+        });
+      }
+    };
+
+    Asc.plugin.attachEvent("onContextMenuShow", (options) => {
+      if (options.type === "Image") {
+        const items = {
+          guid: window.Asc.plugin.guid,
+          items: [
+            {
+              id: "remove-background-btn",
+              text: tSafe("Remove background"),
+              /* items: [], */
+
+            },
+          ],
+        };
+
+        window.Asc.plugin.executeMethod("AddContextMenuItem", [items]);
+      }
+    });
+
+
+
+  }
+  function base64ToFile(base64){
+    // Extrae el mime type de la cadena base64 (ej: image/png, image/jpeg, etc.)
+    const arr = base64.split(",");
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/png";
+
+    // Convierte la parte base64 a binario
+    const bstr = atob(arr[1]);
+    const u8arr = new Uint8Array(bstr.length);
+    for (let i = 0; i < bstr.length; i++) {
+      u8arr[i] = bstr.charCodeAt(i);
+    }
+
+    // Usa la extensión adecuada según el mime type
+    const ext = mime.split("/")[1] || "png";
+
+    // Crea un File
+    return new File([u8arr], `${Date.now()}.${ext}`, { type: mime });
+  }
 })();

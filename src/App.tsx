@@ -49,9 +49,22 @@ export default function App() {
     const { isIOS: isIOSDevice } = getModelInfo();
     setIsIOS(isIOSDevice);
     setIsLoading(false);
+   
+    window["passImageFile"] = (file: File) => {
+      if (!file) return;
+      onDrop([file]); // Reutiliza exactamente la lógica de dropzone
+    };
+
+    // Limpieza al desmontar
+    return () => {
+      delete window["passImageFile"];
+    };
 
     //TOGGLE THEME
   }, []);
+
+
+
 
   if (window && window["Asc"]?.plugin?.theme?.da) {
     const theme = window["Asc"]?.plugin?.theme?.da || "light";
@@ -81,12 +94,14 @@ export default function App() {
     }
   };
 
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const newImages = acceptedFiles.map((file, index) => ({
       id: Date.now() + index,
       file,
       processedFile: undefined
     }));
+
     setImages(prev => [...prev, ...newImages]);
 
     // Initialize model if this is the first image

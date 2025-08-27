@@ -1,28 +1,46 @@
 {
-  "name": "Bg Remover",
+  "name": "BG Remover",
   "guid": "asc.{5782f7f6-7a5d-4451-843e-937f795c74a6}",
   "baseUrl": "",
   "version": "1.0.0",
   "provider": "joselmm",
+  "nameLocale": {
+    "ru": "Ластик фона",
+    "fr": "Effaceur d'arrière-plan",
+    "it": "Gomma per sfondo",
+    "ja": "背景消しゴム",
+    "es": "Borrador de Fondo",
+    "pt-BR": "Borracha de Fundo",
+    "de": "Hintergrundradierer",
+    "uk": "Стирач фону",
+    "zh": "背景橡皮擦"
+  },
   "variations": [
     {
       "url": "index.html",
-      "type": "window",
-      "description": "Convert the text ChatGPT gives you into a ready-to-share Word document.",
+      "type": "panel",
+      "description": "Quickly remove image backgrounds and get clean, transparent results with a single click.",
       "descriptionLocale": {
-        "ru": "Преобразуйте текст, который дает вам ChatGPT, в готовый документ Word.",
-        "fr": "Transformez le texte que vous donne ChatGPT en un document Word prêt à partager.",
-        "it": "Converti il testo che ti dà ChatGPT in un documento Word pronto da condividere.",
-        "ja": "ChatGPTが提供するテキストを、すぐに共有できるWord文書に変換します。",
-        "es": "Convierte el texto que te da ChatGPT en un documento Word listo para compartir.",
-        "pt-BR": "Converta o texto que o ChatGPT lhe dá em um documento Word pronto para compartilhar.",
-        "de": "Wandeln Sie den Text, den Ihnen ChatGPT gibt, in ein sofort teilbares Word-Dokument um.",
-        "uk": "Перетворіть текст, який надає вам ChatGPT, у готовий документ Word.",
-        "zh": "将ChatGPT提供的文本转换为可直接分享的Word文档。"
+        "ru": "Быстро удаляйте фоны изображений и получайте чистый, прозрачный результат одним щелчком.",
+        "fr": "Supprimez rapidement l'arrière-plan des images et obtenez des résultats nets et transparents en un seul clic.",
+        "it": "Rimuovi rapidamente gli sfondi dalle immagini e ottieni risultati puliti e trasparenti con un solo clic.",
+        "ja": "ワンクリックで画像の背景を素早く削除し、きれいで透過的な結果を得ます。",
+        "es": "Elimina rápidamente los fondos de las imágenes y obtén resultados limpios y transparentes con un solo clic.",
+        "pt-BR": "Remova rapidamente os fundos das imagens e obtenha resultados limpos e transparentes com um único clique.",
+        "de": "Entfernen Sie schnell Bildhintergründe und erhalten Sie saubere, transparente Ergebnisse mit nur einem Klick.",
+        "uk": "Швидко видаляйте фони зображень і отримуйте чисті, прозорі результати одним кліком.",
+        "zh": "一键快速去除图像背景，获得干净透明的效果。"
       },
-      "icons": "icon/icon.png",
+      "icons": "resources/plugin-icon/icon.png",
       "EditorsSupport": [
-        "word"
+        "word",
+        "cell",
+        "slide",
+        "pdf"
+      ],
+      "events": [
+        "onContextMenuShow",
+        "onContextMenuClick"
       ],
       "initDataType": "text",
       "initOnSelectionChanged": false,
