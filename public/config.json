@@ -61,7 +61,9 @@
           "dark": "resources/store/icons"
         },
         "screenshots": [
-          "resources/store/screenshots/1.gif"
+          "resources/store/screenshots/1.png",
+          "resources/store/screenshots/2.png",
+          "resources/store/screenshots/3.png"
         ]
       }
     }
